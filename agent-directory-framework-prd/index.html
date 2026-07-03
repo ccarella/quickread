@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PRD: Agent Directory Compiler and Local Harness</title>
-  <meta name="description" content="Revised PRD for a filesystem agent specification, compiler, and local verification harness with Anthropic API integration tests and native runtime adapter seams.">
+  <title>PRD: Agentform</title>
+  <meta name="description" content="PRD for Agentform: a filesystem-native agent specification, compiler, and local verification harness with Anthropic API integration tests and native runtime adapter seams.">
   <style>
     :root{--bg:#fbfaf7;--ink:#171717;--muted:#666;--line:#ded8cb;--soft:#f3efe6;--code:#eee8dc;--accent:#2454a6;--accent2:#8b5e1a;--ok:#0f6b42;--warn:#9a5b00}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.65 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif}main{max-width:1060px;margin:auto;padding:56px 22px 96px}h1,h2,h3,h4{line-height:1.15;letter-spacing:-.025em}h1{font-size:clamp(2.2rem,6vw,4.8rem);margin:.1em 0 .25em}h2{font-size:1.9rem;margin:2.35em 0 .55em;padding-top:.8em;border-top:1px solid var(--line)}h3{font-size:1.25rem;margin:1.8em 0 .25em}.kicker{text-transform:uppercase;letter-spacing:.12em;font-size:.76rem;font-weight:800;color:var(--accent2)}.dek{font-size:1.22rem;color:#333;max-width:860px}.meta{color:var(--muted);font-size:.95rem}.toc{background:var(--soft);border:1px solid var(--line);padding:18px 22px;border-radius:16px;margin:34px 0}.toc ol{columns:2;gap:36px}.callout{border-left:5px solid var(--accent);background:#fff;padding:16px 18px;border-radius:10px;margin:22px 0;box-shadow:0 1px 0 rgba(0,0,0,.04)}.verify{border-left:5px solid var(--ok);background:#fff;padding:16px 18px;border-radius:10px;margin:22px 0}.verify strong{color:var(--ok)}.warning{border-left:5px solid var(--warn);background:#fff;padding:16px 18px;border-radius:10px;margin:22px 0}.warning strong{color:var(--warn)}pre{background:var(--code);padding:16px;overflow:auto;border-radius:12px;border:1px solid var(--line);font-size:.88rem;line-height:1.45}code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}p code,li code{background:var(--code);padding:1px 5px;border-radius:5px}table{border-collapse:collapse;width:100%;margin:20px 0;background:#fff}th,td{border:1px solid var(--line);padding:10px;vertical-align:top}th{background:var(--soft);text-align:left}a{color:var(--accent)}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px}.card h3{margin-top:0}@media(max-width:720px){body{font-size:16px}.toc ol{columns:1}main{padding-top:32px}}
   </style>
@@ -13,8 +13,8 @@
 <main>
 <article>
 <p class="kicker">Product Requirements Document — Revised</p>
-<h1>Agent Directory Compiler and Local Harness</h1>
-<p class="dek">A filesystem-native agent specification, compiler, and local verification harness. It is intentionally not a replacement for Azure Foundry, AWS AgentCore, Google ADK / Vertex Agent Platform, LangGraph, OpenAI Agents SDK, or Anthropic Agent SDK.</p>
+<h1>Agentform</h1>
+<p class="dek">A filesystem-native agent specification, compiler, and local verification harness. Agentform is intentionally not a replacement for Azure Foundry, AWS AgentCore, Google ADK / Vertex Agent Platform, LangGraph, OpenAI Agents SDK, or Anthropic Agent SDK.</p>
 <p class="meta">Audience: Claude Code, Codex, frontier coding agents, and human technical reviewers. Proof target: a local PDF summarization agent using the Anthropic API for integration tests.</p>
 
 <div class="toc"><strong>Contents</strong><ol>
@@ -48,20 +48,20 @@
 
 <section id="strategic-clarification">
 <h2>1. Strategic clarification</h2>
-<p>This project should not compete with native agent runtimes. Its job is to define a filesystem-native authoring model, compiler, local verification harness, trace/eval/artifact conventions, and adapter contract.</p>
+<p>Agentform should not compete with native agent runtimes. Its job is to define a filesystem-native authoring model, compiler, local verification harness, trace/eval/artifact conventions, and adapter contract.</p>
 <p>The local runtime is a reference implementation for development and proof. Production adapters should target native platforms whenever possible: Azure Foundry / Azure Agent Framework, AWS AgentCore, Google ADK / Vertex Agent Platform, LangGraph, OpenAI Agents SDK, Anthropic Agent SDK, or Docker.</p>
-<div class="callout"><strong>Product category:</strong> this is not a general-purpose agent SDK. It is an <strong>agent directory specification + compiler + local harness</strong>.</div>
+<div class="callout"><strong>Product category:</strong> Agentform is not a general-purpose agent SDK. It is an <strong>agent directory specification + compiler + local harness</strong>.</div>
 <h3>Authoring model</h3>
 <pre><code>agent/ source files
         ↓
-compiler validation
+agentform compile
         ↓
 portable manifest
         ↓
 local verification harness
         ↓
 native runtime adapter later</code></pre>
-<h3>What this project must protect</h3>
+<h3>What Agentform must protect</h3>
 <ul>
 <li>Agent behavior is source-controlled.</li>
 <li>Instructions, tools, schemas, workflows, evals, and fixtures live together.</li>
@@ -75,10 +75,10 @@ native runtime adapter later</code></pre>
 <h2>2. Goals and non-goals</h2>
 <h3>Primary goals</h3>
 <ol>
-<li>Initialize an agent directory.</li>
+<li>Initialize an Agentform agent directory.</li>
 <li>Compile an <code>agent/</code> directory into a portable manifest.</li>
 <li>Run the compiled manifest locally through a reference harness.</li>
-<li>Persist run state, events, tool calls, traces, and artifacts.</li>
+<li>Persist run state, events, tool calls, model calls, traces, and artifacts.</li>
 <li>Support local tools without Docker sandboxing in V1.</li>
 <li>Support deterministic workflow files as the first orchestration mode.</li>
 <li>Support evals as first-class files.</li>
@@ -112,12 +112,12 @@ A cloud deployment orchestrator from scratch</code></pre>
 <pre><code>pnpm install
 pnpm build
 pnpm test
-pnpm agent init examples/pdf-summarizer
-pnpm agent compile examples/pdf-summarizer
-ANTHROPIC_API_KEY=... pnpm agent run examples/pdf-summarizer --input examples/pdf-summarizer/fixtures/sample.pdf
-ANTHROPIC_API_KEY=... pnpm agent eval examples/pdf-summarizer
-pnpm agent deploy --target local examples/pdf-summarizer</code></pre>
-<p>Success requires a compiled manifest, run events, trace JSONL, PDF extraction, an Anthropic-generated <code>summary.md</code>, recorded tool calls, passing evals, and a running local HTTP API.</p>
+pnpm agentform init examples/pdf-summarizer
+pnpm agentform compile examples/pdf-summarizer
+ANTHROPIC_API_KEY=... pnpm agentform run examples/pdf-summarizer --input examples/pdf-summarizer/fixtures/sample.pdf
+ANTHROPIC_API_KEY=... pnpm agentform eval examples/pdf-summarizer
+pnpm agentform deploy --target local examples/pdf-summarizer</code></pre>
+<p>Success requires a compiled manifest, run events, trace JSONL, PDF extraction, an Anthropic-generated <code>summary.md</code>, recorded tool and model calls, passing evals, and a running local HTTP API.</p>
 </section>
 
 <section id="audience">
@@ -130,7 +130,7 @@ pnpm agent deploy --target local examples/pdf-summarizer</code></pre>
 <h2>4. Architectural principles</h2>
 <div class="grid">
 <div class="card"><h3>Agent directory as source</h3><p><code>agent/</code> is source code. Runtime output belongs in <code>.agent/</code>.</p></div>
-<div class="card"><h3>Compile before execution</h3><p>The runtime executes compiled manifests, not arbitrary loose files.</p></div>
+<div class="card"><h3>Compile before execution</h3><p>Agentform executes compiled manifests, not arbitrary loose files.</p></div>
 <div class="card"><h3>Local as reference</h3><p>The local runtime proves behavior and evals. It is not the canonical production runtime.</p></div>
 <div class="card"><h3>Native backends later</h3><p>Azure, AWS, Vertex, Docker, and LangGraph are adapter targets, not V1 dependencies.</p></div>
 <div class="card"><h3>No Docker in V1</h3><p>Run tools in-process first. Docker becomes a future executor, not a rewrite.</p></div>
@@ -153,7 +153,7 @@ BackendCompiler</code></pre>
 
 <section id="repo">
 <h2>5. Repository structure</h2>
-<pre><code>agent-directory-framework/
+<pre><code>agentform/
   package.json
   pnpm-workspace.yaml
   tsconfig.base.json
@@ -183,7 +183,6 @@ BackendCompiler</code></pre>
         tools/
           extract_pdf_text.ts
           chunk_document.ts
-          summarize_chunks.ts
           write_artifact.ts
         skills/
           technical-summary.md
@@ -236,35 +235,35 @@ packages/telemetry       trace emitter, JSONL mirror, OpenTelemetry bridge
 packages/model-anthropic Anthropic Messages API provider
 packages/pdf-tools       PDF extraction utilities for proof agent
 packages/adapters        adapter interfaces and not-implemented target stubs
-packages/cli             init, dev, compile, run, eval, deploy</code></pre>
+packages/cli             init, dev, compile, run, eval, deploy, plan</code></pre>
 <div class="verify"><strong>Verifiable condition:</strong><br>Run <code>pnpm test packages/core packages/compiler packages/runtime-local packages/model-anthropic</code>. Success means package APIs are exported, no circular dependency exists, and <code>pnpm build</code> passes.</div>
 </section>
 
 <section id="cli">
 <h2>7. CLI product surface</h2>
-<pre><code>agent init &lt;path&gt;
-agent dev &lt;path&gt;
-agent compile &lt;path&gt;
-agent run &lt;path&gt; --input &lt;file-or-json&gt;
-agent eval &lt;path&gt;
-agent deploy --target local &lt;path&gt;
-agent plan --target &lt;local|docker|azure|vertex|aws|langgraph&gt; &lt;path&gt;</code></pre>
+<pre><code>agentform init &lt;path&gt;
+agentform dev &lt;path&gt;
+agentform compile &lt;path&gt;
+agentform run &lt;path&gt; --input &lt;file-or-json&gt;
+agentform eval &lt;path&gt;
+agentform deploy --target local &lt;path&gt;
+agentform plan --target &lt;local|docker|azure|vertex|aws|langgraph&gt; &lt;path&gt;</code></pre>
 <p>Expose through pnpm scripts:</p>
-<pre><code>pnpm agent init examples/pdf-summarizer
-pnpm agent compile examples/pdf-summarizer
-ANTHROPIC_API_KEY=... pnpm agent run examples/pdf-summarizer --input examples/pdf-summarizer/fixtures/sample.pdf
-ANTHROPIC_API_KEY=... pnpm agent eval examples/pdf-summarizer
-pnpm agent deploy --target local examples/pdf-summarizer
-pnpm agent plan --target azure examples/pdf-summarizer</code></pre>
+<pre><code>pnpm agentform init examples/pdf-summarizer
+pnpm agentform compile examples/pdf-summarizer
+ANTHROPIC_API_KEY=... pnpm agentform run examples/pdf-summarizer --input examples/pdf-summarizer/fixtures/sample.pdf
+ANTHROPIC_API_KEY=... pnpm agentform eval examples/pdf-summarizer
+pnpm agentform deploy --target local examples/pdf-summarizer
+pnpm agentform plan --target azure examples/pdf-summarizer</code></pre>
 <h3>Command behavior</h3>
 <ul>
-<li><code>agent init</code> creates <code>agent/</code> source and a placeholder <code>.agent/</code>.</li>
-<li><code>agent dev</code> watches files, recompiles on change, and prints diagnostics. Keep thin in V1.</li>
-<li><code>agent compile</code> emits <code>.agent/compiled/manifest.json</code>, <code>manifest.hash</code>, <code>prompt-bundle.md</code>, and <code>diagnostics.json</code>.</li>
-<li><code>agent run</code> compiles if needed and executes one local task.</li>
-<li><code>agent eval</code> runs eval files under <code>agent/evals/</code>.</li>
-<li><code>agent deploy --target local</code> starts the local reference runtime and HTTP API.</li>
-<li><code>agent plan --target ...</code> validates that a compiled manifest can be mapped to the requested target and emits a deployment plan or explicit unsupported-feature diagnostics.</li>
+<li><code>agentform init</code> creates <code>agent/</code> source and a placeholder <code>.agent/</code>.</li>
+<li><code>agentform dev</code> watches files, recompiles on change, and prints diagnostics. Keep thin in V1.</li>
+<li><code>agentform compile</code> emits <code>.agent/compiled/manifest.json</code>, <code>manifest.hash</code>, <code>prompt-bundle.md</code>, and <code>diagnostics.json</code>.</li>
+<li><code>agentform run</code> compiles if needed and executes one local task.</li>
+<li><code>agentform eval</code> runs eval files under <code>agent/evals/</code>.</li>
+<li><code>agentform deploy --target local</code> starts the local reference runtime and HTTP API.</li>
+<li><code>agentform plan --target ...</code> validates that a compiled manifest can be mapped to the requested target and emits a deployment plan or explicit unsupported-feature diagnostics.</li>
 </ul>
 <div class="verify"><strong>Verifiable condition:</strong><br>Run init, compile, run, eval, local deploy, and all target plans. Success means real commands execute, unsupported targets return clear plan diagnostics, and local deploy health returns 200.</div>
 </section>
@@ -330,7 +329,7 @@ policy:
 
 <section id="compiler">
 <h2>9. Compiler requirements</h2>
-<p>The compiler transforms filesystem source into a portable manifest.</p>
+<p>The Agentform compiler transforms filesystem source into a portable manifest.</p>
 <h3>Inputs</h3>
 <pre><code>agent/agent.yaml
 agent/instructions.md
@@ -381,7 +380,7 @@ agent/schemas/*</code></pre>
   evals: EvalDefinition[];
   policy: PolicyDefinition;
 };</code></pre>
-<div class="verify"><strong>Verifiable condition:</strong><br>Run compiler tests and <code>pnpm agent compile examples/pdf-summarizer</code>. Success means manifest includes all discovered components and manifest hash changes when source files change.</div>
+<div class="verify"><strong>Verifiable condition:</strong><br>Run compiler tests and <code>pnpm agentform compile examples/pdf-summarizer</code>. Success means manifest includes all discovered components and manifest hash changes when source files change.</div>
 </section>
 
 <section id="runtime">
@@ -531,7 +530,7 @@ GET    /runs/:id/events
 GET    /runs/:id/trace
 GET    /runs/:id/artifacts
 GET    /artifacts/:artifactId</code></pre>
-<div class="verify"><strong>Verifiable condition:</strong><br>Run <code>pnpm agent deploy --target local examples/pdf-summarizer</code>, then <code>curl /health</code> and <code>POST /runs</code>. Success means SQLite contains runs, events, model calls, tool calls, and artifacts.</div>
+<div class="verify"><strong>Verifiable condition:</strong><br>Run <code>pnpm agentform deploy --target local examples/pdf-summarizer</code>, then <code>curl /health</code> and <code>POST /runs</code>. Success means SQLite contains runs, events, model calls, tool calls, and artifacts.</div>
 </section>
 
 <section id="workflow">
@@ -559,7 +558,7 @@ GET    /artifacts/:artifactId</code></pre>
 <section id="tools">
 <h2>13. Tool system</h2>
 <h3>Tool file shape</h3>
-<pre><code>import { defineTool } from "@agent-directory/core";
+<pre><code>import { defineTool } from "@agentform/core";
 import { z } from "zod";
 
 export default defineTool({
@@ -669,10 +668,10 @@ event_emitted
 no_policy_violations
 run_succeeded
 run_failed</code></pre>
-<p><code>agent eval</code> must compile the agent, run each eval, write results, and return nonzero on failure.</p>
+<p><code>agentform eval</code> must compile the agent, run each eval, write results, and return nonzero on failure.</p>
 <pre><code>.agent/evals/latest/results.json
 .agent/evals/latest/results.md</code></pre>
-<div class="verify"><strong>Verifiable condition:</strong><br>Run <code>ANTHROPIC_API_KEY=... pnpm agent eval examples/pdf-summarizer</code>. Success means passing eval exits 0, broken eval exits nonzero, results files are written, and model/tool/artifact assertions work.</div>
+<div class="verify"><strong>Verifiable condition:</strong><br>Run <code>ANTHROPIC_API_KEY=... pnpm agentform eval examples/pdf-summarizer</code>. Success means passing eval exits 0, broken eval exits nonzero, results files are written, and model/tool/artifact assertions work.</div>
 </section>
 
 <section id="model">
@@ -790,7 +789,7 @@ assertions:
 <section id="local-deploy">
 <h2>19. Local deploy behavior</h2>
 <h3>Command</h3>
-<pre><code>pnpm agent deploy --target local examples/pdf-summarizer</code></pre>
+<pre><code>pnpm agentform deploy --target local examples/pdf-summarizer</code></pre>
 <h3>Expected behavior</h3>
 <pre><code>compile the agent
 copy manifest to .agent/local/manifest.json
@@ -801,7 +800,7 @@ write runtime PID
 print local endpoints
 validate ANTHROPIC_API_KEY only when a run uses anthropic provider</code></pre>
 <h3>Expected output</h3>
-<pre><code>Local reference runtime started.
+<pre><code>Agentform local reference runtime started.
 
 API:
   http://127.0.0.1:43110
@@ -853,12 +852,12 @@ interface DeploymentAdapter {
 <h2>21. Native runtime escape test</h2>
 <p>The manifest must not contain assumptions that make Azure, AWS, Vertex, LangGraph, or Docker adapters impossible.</p>
 <h3>Mock adapter tests</h3>
-<pre><code>pnpm agent plan --target local examples/pdf-summarizer
-pnpm agent plan --target docker examples/pdf-summarizer
-pnpm agent plan --target azure examples/pdf-summarizer
-pnpm agent plan --target vertex examples/pdf-summarizer
-pnpm agent plan --target aws examples/pdf-summarizer
-pnpm agent plan --target langgraph examples/pdf-summarizer</code></pre>
+<pre><code>pnpm agentform plan --target local examples/pdf-summarizer
+pnpm agentform plan --target docker examples/pdf-summarizer
+pnpm agentform plan --target azure examples/pdf-summarizer
+pnpm agentform plan --target vertex examples/pdf-summarizer
+pnpm agentform plan --target aws examples/pdf-summarizer
+pnpm agentform plan --target langgraph examples/pdf-summarizer</code></pre>
 <h3>Expected result</h3>
 <pre><code>local:
   supported: true
@@ -901,11 +900,11 @@ langgraph:
 <section id="agent-instructions">
 <h2>22. Coding-agent project instructions</h2>
 <p>Create both <code>AGENTS.md</code> and <code>CLAUDE.md</code>. Keep them short and operational.</p>
-<pre><code># Agent Directory Compiler and Local Harness
+<pre><code># Agentform
 
 ## Architecture
 
-This project is a filesystem agent specification, compiler, and local verification harness. It is not a replacement for Azure Foundry, AWS AgentCore, Google ADK, LangGraph, OpenAI Agents SDK, or Anthropic Agent SDK.
+Agentform is a filesystem agent specification, compiler, and local verification harness. It is not a replacement for Azure Foundry, AWS AgentCore, Google ADK, LangGraph, OpenAI Agents SDK, or Anthropic Agent SDK.
 
 The source of truth for an agent is `agent/`. Runtime output belongs in `.agent/`.
 
@@ -913,10 +912,10 @@ The source of truth for an agent is `agent/`. Runtime output belongs in `.agent/
 
 - `pnpm build`
 - `pnpm test`
-- `pnpm agent compile examples/pdf-summarizer`
-- `ANTHROPIC_API_KEY=... pnpm agent run examples/pdf-summarizer --input examples/pdf-summarizer/agent/fixtures/sample.pdf`
-- `ANTHROPIC_API_KEY=... pnpm agent eval examples/pdf-summarizer`
-- `pnpm agent plan --target azure examples/pdf-summarizer`
+- `pnpm agentform compile examples/pdf-summarizer`
+- `ANTHROPIC_API_KEY=... pnpm agentform run examples/pdf-summarizer --input examples/pdf-summarizer/agent/fixtures/sample.pdf`
+- `ANTHROPIC_API_KEY=... pnpm agentform eval examples/pdf-summarizer`
+- `pnpm agentform plan --target azure examples/pdf-summarizer`
 
 ## Rules
 
@@ -967,13 +966,13 @@ set -euo pipefail
 
 pnpm build
 pnpm test
-pnpm agent compile examples/pdf-summarizer
-ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:?missing} pnpm agent run examples/pdf-summarizer --input examples/pdf-summarizer/agent/fixtures/sample.pdf
-ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:?missing} pnpm agent eval examples/pdf-summarizer
-pnpm agent plan --target azure examples/pdf-summarizer
-pnpm agent plan --target aws examples/pdf-summarizer
-pnpm agent plan --target vertex examples/pdf-summarizer
-pnpm agent plan --target langgraph examples/pdf-summarizer</code></pre>
+pnpm agentform compile examples/pdf-summarizer
+ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:?missing} pnpm agentform run examples/pdf-summarizer --input examples/pdf-summarizer/agent/fixtures/sample.pdf
+ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:?missing} pnpm agentform eval examples/pdf-summarizer
+pnpm agentform plan --target azure examples/pdf-summarizer
+pnpm agentform plan --target aws examples/pdf-summarizer
+pnpm agentform plan --target vertex examples/pdf-summarizer
+pnpm agentform plan --target langgraph examples/pdf-summarizer</code></pre>
 <div class="verify"><strong>Verifiable condition:</strong><br>Run <code>bash scripts/smoke-local.sh</code> with <code>ANTHROPIC_API_KEY</code>. Success means it exits 0, tests pass, Anthropic-backed PDF summary is generated, evals pass, and adapter plans emit.</div>
 </section>
 
@@ -981,10 +980,10 @@ pnpm agent plan --target langgraph examples/pdf-summarizer</code></pre>
 <h2>24. Milestones</h2>
 <table><thead><tr><th>Milestone</th><th>Deliverables</th><th>Acceptance</th></tr></thead><tbody>
 <tr><td>1. Skeleton and types</td><td>Workspace setup, core types, instruction files, package boundaries.</td><td><code>pnpm build</code> and <code>pnpm test</code> pass.</td></tr>
-<tr><td>2. Compiler</td><td>Parser, discovery, manifest emitter, diagnostics.</td><td><code>pnpm agent compile examples/pdf-summarizer</code> emits manifest.</td></tr>
+<tr><td>2. Compiler</td><td>Parser, discovery, manifest emitter, diagnostics.</td><td><code>pnpm agentform compile examples/pdf-summarizer</code> emits manifest.</td></tr>
 <tr><td>3. Tool system and workflow engine</td><td><code>defineTool</code>, <code>defineWorkflow</code>, tool proxy, execution, recording.</td><td>Fake workflow and tool validation tests pass.</td></tr>
 <tr><td>4. Anthropic model provider</td><td>Messages API provider, env config, model call recording.</td><td>Integration test calls Anthropic when key exists and fails clearly when missing.</td></tr>
-<tr><td>5. Local reference runtime</td><td>SQLite store, lifecycle, events, model calls, artifact store, trace JSONL.</td><td><code>agent run</code> creates run directory, events, trace, artifacts.</td></tr>
+<tr><td>5. Local reference runtime</td><td>SQLite store, lifecycle, events, model calls, artifact store, trace JSONL.</td><td><code>agentform run</code> creates run directory, events, trace, artifacts.</td></tr>
 <tr><td>6. PDF proof</td><td>Fixture, extraction, chunking, Anthropic summary, artifact, evals.</td><td>PDF example runs and evals pass with <code>ANTHROPIC_API_KEY</code>.</td></tr>
 <tr><td>7. Local deploy</td><td>Local adapter, Fastify API, worker, runtime DB.</td><td><code>/health</code> returns 200 and <code>POST /runs</code> executes summarizer.</td></tr>
 <tr><td>8. Adapter planning</td><td>Mock target plans for Docker, Azure, Vertex, AWS, LangGraph.</td><td>All targets produce plans or clear unsupported diagnostics without cloud SDKs.</td></tr>
@@ -1002,7 +1001,7 @@ examples/pdf-summarizer compiles
 examples/pdf-summarizer runs locally using Anthropic API
 examples/pdf-summarizer evals pass
 
-agent deploy --target local starts API
+agentform deploy --target local starts API
 POST /runs through API works
 summary.md artifact is generated
 events, model calls, tool calls, and traces are written
@@ -1010,7 +1009,7 @@ events, model calls, tool calls, and traces are written
 Docker/Azure/Vertex/AWS/LangGraph are not implemented
 but their adapter planning seams are present
 
-The project does not rebuild native runtime capabilities
+Agentform does not rebuild native runtime capabilities
 The manifest remains portable across planned backends</code></pre>
 </section>
 
@@ -1020,7 +1019,7 @@ The manifest remains portable across planned backends</code></pre>
   Start from empty repository or partially implemented repository.
 
 Goal:
-  Implement the Agent Directory Compiler and Local Harness V1 described in this PRD.
+  Implement Agentform V1 described in this PRD.
 
 Constraints:
   - TypeScript / Node.js / pnpm.
@@ -1038,7 +1037,7 @@ Verification:
     pnpm build
     pnpm test
     ANTHROPIC_API_KEY=... bash scripts/smoke-local.sh
-    pnpm agent deploy --target local examples/pdf-summarizer
+    pnpm agentform deploy --target local examples/pdf-summarizer
 
   Then verify:
     curl http://127.0.0.1:43110/health
@@ -1046,10 +1045,10 @@ Verification:
     GET /runs/:id
     GET /runs/:id/events
     GET /runs/:id/artifacts
-    pnpm agent plan --target azure examples/pdf-summarizer
-    pnpm agent plan --target aws examples/pdf-summarizer
-    pnpm agent plan --target vertex examples/pdf-summarizer
-    pnpm agent plan --target langgraph examples/pdf-summarizer
+    pnpm agentform plan --target azure examples/pdf-summarizer
+    pnpm agentform plan --target aws examples/pdf-summarizer
+    pnpm agentform plan --target vertex examples/pdf-summarizer
+    pnpm agentform plan --target langgraph examples/pdf-summarizer
 
 Success State:
   All verification commands pass.

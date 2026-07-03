@@ -1,405 +1,298 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Filesystem Agents, Vercel Eve, and an Azure-Native Agent Framework</title>
-  <meta name="description" content="A technical research report on filesystem-first agent frameworks, Vercel Eve, Microsoft Agent Framework, Azure AI Foundry, and an Azure-native filesystem agent runtime." />
-  <style>
-    :root { --fg:#171717; --muted:#666; --line:#ddd; --bg:#fff; --soft:#f7f7f7; --accent:#1f4f8f; --code:#f4f4f4; }
-    body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; line-height:1.58; color:var(--fg); background:var(--bg); max-width:900px; margin:0 auto; padding:48px 22px 80px; }
-    h1,h2,h3 { line-height:1.18; letter-spacing:-0.02em; }
-    h1 { font-size:2.25rem; margin:0 0 12px; }
-    h2 { margin-top:42px; border-top:1px solid var(--line); padding-top:28px; font-size:1.45rem; }
-    h3 { margin-top:28px; font-size:1.12rem; }
-    p { margin:12px 0; }
-    a { color:var(--accent); text-decoration-thickness:1px; text-underline-offset:2px; }
-    .dek { font-size:1.13rem; color:#333; margin-bottom:24px; }
-    .meta { color:var(--muted); font-size:.92rem; margin-bottom:32px; }
-    .callout { background:var(--soft); border-left:4px solid var(--accent); padding:14px 16px; margin:20px 0; }
-    table { border-collapse:collapse; width:100%; margin:18px 0; font-size:.95rem; }
-    th,td { border:1px solid var(--line); padding:9px 10px; vertical-align:top; }
-    th { background:var(--soft); text-align:left; }
-    pre { background:var(--code); padding:14px; overflow-x:auto; border-radius:8px; font-size:.9rem; }
-    code { background:var(--code); padding:1px 4px; border-radius:4px; }
-    pre code { padding:0; background:transparent; }
-    ul,ol { padding-left:24px; }
-    .toc { background:var(--soft); border:1px solid var(--line); padding:14px 18px; border-radius:10px; }
-    .toc a { text-decoration:none; }
-    .smallcaps { text-transform:uppercase; letter-spacing:.08em; font-size:.77rem; color:var(--muted); font-weight:700; }
-    blockquote { margin:18px 0; padding:8px 18px; border-left:3px solid var(--line); color:#333; }
-    .footnotes { font-size:.9rem; }
-  </style>
-</head>
-<body>
-<article>
-  <p class="smallcaps">Research report</p>
-  <h1>Filesystem Agents, Vercel Eve, and an Azure-Native Agent Framework</h1>
-  <p class="dek">A technical fellow’s analysis of the filesystem-first agent pattern, what Vercel’s Eve gets right, how Microsoft’s Azure agent environment compares, and how to build an Azure-native version without merely copying Eve.</p>
-  <p class="meta">Prepared July 2, 2026. Sources include Vercel Eve documentation and launch materials, Microsoft Agent Framework documentation, and Microsoft Foundry Agent Service documentation.</p>
-
-  <div class="toc"><strong>Contents</strong>
-    <ol>
-      <li><a href="#executive-summary">Executive summary</a></li>
-      <li><a href="#filesystem-agents">What filesystem agents are</a></li>
-      <li><a href="#vercel-eve">Vercel Eve</a></li>
-      <li><a href="#azure-environment">The Azure agent environment</a></li>
-      <li><a href="#azure-framework">Designing a filesystem agent framework on Azure</a></li>
-      <li><a href="#differences">How the Azure version would differ from Eve</a></li>
-      <li><a href="#why-build">Why build it</a></li>
-      <li><a href="#implementation-plan">Implementation plan</a></li>
-      <li><a href="#risks">Risks and hard questions</a></li>
-      <li><a href="#sources">Sources</a></li>
-    </ol>
-  </div>
-
-  <h2 id="executive-summary">1. Executive summary</h2>
-  <p>Filesystem agents are an architectural pattern in which an agent is defined by a repository layout rather than assembled imperatively in application code. The agent’s instructions, tools, skills, subagents, schedules, approvals, tests, and deployment metadata live as files under a conventional directory structure. A runtime scans the directory, validates it, compiles it into an executable agent, and binds it to production infrastructure.</p>
-  <p>Vercel’s <strong>Eve</strong> is the clearest current example of this pattern. Vercel describes Eve as a filesystem-first framework for durable backend AI agents. A developer defines an agent under an <code>agent/</code> directory; Eve discovers those files and compiles them into an app that runs on Vercel Functions. The Vercel documentation states that Eve uses Vercel Workflows for session persistence and resumption, Vercel Sandbox for isolated code execution, AI Gateway for model routing and fallbacks, Vercel Connect for OAuth/API-key management, and Vercel Observability for runs, token usage, and performance telemetry.<sup><a href="#src-vercel-docs">1</a></sup></p>
-  <p>Microsoft’s closest equivalent is not filesystem-first. It is the combination of <strong>Microsoft Agent Framework</strong> and <strong>Microsoft Foundry Agent Service</strong>. Microsoft Agent Framework combines the simpler agent abstractions associated with AutoGen and the enterprise-oriented features of Semantic Kernel: session state, type safety, middleware, telemetry, and graph-based workflows for multi-agent orchestration.<sup><a href="#src-ms-agent-framework">2</a></sup> Foundry Agent Service is the managed Azure platform for building, deploying, and scaling agents, including prompt agents and hosted agents. It supports custom code packaged as containers, managed endpoints, identity, observability, private networking, versioning, publishing, and enterprise governance.<sup><a href="#src-foundry-agent-service">3</a></sup></p>
-  <div class="callout"><strong>Bottom line:</strong> Eve is a productized, filesystem-first agent harness tightly integrated with Vercel’s infrastructure. Azure has the stronger enterprise substrate, but Microsoft has not made the filesystem itself the primary developer interface. The opportunity is to build an Azure-native filesystem agent specification and compiler that targets Microsoft Agent Framework, Foundry Agent Service, Azure Durable Functions, Azure Container Apps, Azure OpenAI / Foundry models, Azure AI Search, Entra ID, Key Vault, Application Insights, and OpenTelemetry.</div>
-
-  <h2 id="filesystem-agents">2. What filesystem agents are</h2>
-  <p>A filesystem agent treats a folder as the source of truth for an agent. This sounds small, but it is a serious shift in developer ergonomics and governance.</p>
-  <p>Traditional agent code tends to look like this:</p>
-  <pre><code>const agent = new Agent({ model });
-agent.addTool(searchTool);
-agent.addTool(githubTool);
-agent.addSkill(prdSkill);
-agent.addSubAgent(researcher);
-agent.addApprovalPolicy(approvalPolicy);
-agent.addMemory(memoryStore);
-agent.run();</code></pre>
-  <p>A filesystem-first equivalent might look like this:</p>
-  <pre><code>agent/
+<!doctype html><html lang='en'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'><title>The Agent as a Directory</title><meta name='description' content='A technical report on designing a cloud-agnostic filesystem-based agent framework inspired by Vercel Eve, with Azure Blob Storage PDF summarization examples.'><style>:root{--bg:#fbfaf7;--ink:#171717;--muted:#666;--line:#ded8cb;--soft:#f3efe6;--code:#eee8dc;--accent:#2454a6;--accent2:#8b5e1a}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:18px/1.65 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif}main{max-width:980px;margin:auto;padding:56px 22px 96px}h1,h2,h3{line-height:1.15;letter-spacing:-.025em}h1{font-size:clamp(2.3rem,7vw,5.2rem);margin:.1em 0 .25em}h2{font-size:2rem;margin:2.3em 0 .5em;padding-top:.7em;border-top:1px solid var(--line)}h3{font-size:1.25rem;margin:1.8em 0 .25em}.kicker{text-transform:uppercase;letter-spacing:.12em;font-size:.76rem;font-weight:800;color:var(--accent2)}.dek{font-size:1.25rem;color:#333;max-width:820px}.meta{color:var(--muted);font-size:.95rem}.toc{background:var(--soft);border:1px solid var(--line);padding:18px 22px;border-radius:16px;margin:34px 0}.toc ol{columns:2;gap:36px}.callout{border-left:5px solid var(--accent);background:#fff;padding:16px 18px;border-radius:10px;margin:22px 0;box-shadow:0 1px 0 rgba(0,0,0,.04)}pre{background:var(--code);padding:16px;overflow:auto;border-radius:12px;border:1px solid var(--line);font-size:.88rem;line-height:1.45}code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px}.card h3{margin-top:0}.small{font-size:.94rem;color:var(--muted)}a{color:var(--accent)}table{border-collapse:collapse;width:100%;margin:20px 0;background:#fff}th,td{border:1px solid var(--line);padding:10px;vertical-align:top}th{background:var(--soft);text-align:left}@media(max-width:680px){body{font-size:16px}.toc ol{columns:1}main{padding-top:32px}}</style></head><body><main><article><p class='kicker'>Research report</p><h1>The Agent as a Directory</h1><p class='dek'>Designing a cloud-agnostic filesystem-based agent framework inspired by Vercel Eve, deployable to Azure, Google Cloud, AWS, or Kubernetes.</p><p class='meta'>Prepared July 2026. Written as an architectural report for builders who want agents to become legible, testable, portable software rather than dashboard objects.</p><div class='toc'><strong>Contents</strong><ol><li><a href='#exec'>Executive summary</a></li><li><a href='#why-files'>Why filesystem-first</a></li><li><a href='#architecture'>Core architecture</a></li><li><a href='#runtime'>Runtime decisions</a></li><li><a href='#clouds'>Cloud adapters</a></li><li><a href='#mvp'>Recommended MVP</a></li><li><a href='#principles'>Design principles</a></li><li><a href='#101'>101: PDF summarizer</a></li><li><a href='#201'>201: Azure Blob Storage</a></li><li><a href='#301'>301: 100 PDFs and subagents</a></li><li><a href='#sources'>Sources</a></li></ol></div><section id='exec'><h2>1. Executive summary</h2><p>The most important idea in Vercel Eve is not that it runs on Vercel. It is that an agent can be expressed as a directory.</p><p>A directory has files. Files are durable interfaces. They are versionable, inspectable, diffable, reviewable, testable, vendorable, forkable, and understandable by humans and coding agents. That makes the filesystem an unusually good surface for agent software, because agents are partly natural-language systems and therefore need more governance, not less.</p><p>Vercel describes Eve as a filesystem-first framework for durable backend AI agents. An agent lives under an <code>agent/</code> directory; Eve discovers files such as <code>instructions.md</code>, <code>agent.ts</code>, <code>tools/</code>, <code>skills/</code>, <code>subagents/</code>, <code>channels/</code>, and <code>schedules/</code>, then compiles that directory into an app running on Vercel infrastructure.</p><div class='callout'><strong>The bigger opportunity:</strong> separate the agent authoring model from the cloud execution substrate. Build an Eve-like developer experience, but make the source format portable across Azure, Google Cloud, AWS, local machines, and Kubernetes.</div><p>The target product should feel like this:</p><pre><code>agent/
+  instructions.md
   agent.yaml
-  instructions.md
-
   skills/
-    write-prd.md
-    code-review.md
-    summarize-research.md
-
-  tools/
-    github.tool.ts
-    jira.tool.ts
-    search.tool.ts
-
-  subagents/
-    researcher/
-      agent.yaml
-      instructions.md
-      tools/
-      skills/
-
-    editor/
-      agent.yaml
-      instructions.md
-      skills/
-
-  approvals/
-    production-write.yaml
-    external-email.yaml
-
-  schedules/
-    daily-briefing.yaml
-
-  evals/
-    prd-quality.yaml
-    code-review-regression.yaml</code></pre>
-  <p>The runtime’s job is to read this repository and answer four questions:</p>
-  <ol>
-    <li><strong>What is the agent allowed to do?</strong> Instructions, tools, scopes, approval policies, and identity bindings.</li>
-    <li><strong>What capabilities does it have?</strong> Skills, tools, subagents, memory, retrieval indexes, and domain knowledge.</li>
-    <li><strong>How does it execute?</strong> Runtime backend, workflow engine, sandbox, scheduling, retries, checkpoints, and human-in-the-loop pauses.</li>
-    <li><strong>How do we know it works?</strong> Evals, traces, golden tasks, red-team suites, regression gates, and release policy.</li>
-  </ol>
-  <h3>2.1 Why the filesystem is a good interface</h3>
-  <ul>
-    <li><strong>Inspectable.</strong> A buyer, security reviewer, or delivery lead can see what the agent is instructed to do without reverse-engineering the app.</li>
-    <li><strong>Versionable.</strong> Git diffs show changes to skills, tools, permissions, and evals. That makes agent evolution reviewable.</li>
-    <li><strong>Composable.</strong> Capabilities can be copied, templated, forked, vendored, and packaged.</li>
-    <li><strong>Runtime-independent.</strong> The agent definition can outlive any single cloud provider or orchestration library.</li>
-    <li><strong>Readable by non-code contributors.</strong> Product, design, compliance, domain experts, and client stakeholders can edit markdown skills, policies, examples, and acceptance tests.</li>
-  </ul>
-  <h3>2.2 The deeper analogy: containers and Kubernetes</h3>
-  <p>The long-term opportunity is not “make prompts files.” It is an <strong>agent specification</strong> that can be compiled to multiple runtimes. Containers separated application packaging from host machines. Kubernetes separated desired state from implementation. A filesystem agent spec could separate agent definition from cloud runtime.</p>
-  <p>In that world, a consulting team could maintain an internal library of skills, tool packs for enterprise systems, subagent archetypes for research, planning, coding, testing, and delivery, evaluation suites, approval templates, and cloud-specific deployment adapters. The repository becomes the durable artifact. The cloud runtime becomes replaceable infrastructure.</p>
-
-  <h2 id="vercel-eve">3. Vercel Eve</h2>
-  <p>Eve’s strongest idea is not that it can call tools or coordinate subagents. Those are table stakes. Its strongest idea is that the agent is a directory, and the platform supplies the production harness.</p>
-  <p>A representative Eve-style layout is:</p>
-  <pre><code>agent/
-  instructions.md
-  config.ts
-
+    research.md
+    customer-escalation.md
   tools/
     search.ts
-    github.ts
-    jira.ts
-
-  skills/
-    code-review.md
-    write-prd.md
-    summarize-research.md
-
-  subagents/
-    researcher/
-    planner/
-    implementer/
-
-  approvals/
-  schedules/
-  channels/</code></pre>
-  <p>Vercel’s documentation describes Eve as compiling this agent directory into an application that runs on Vercel Functions, using Vercel’s associated platform services for durability, sandboxing, identity, model routing, and observability.<sup><a href="#src-vercel-docs">1</a></sup></p>
-  <h3>3.1 What Eve gives you</h3>
-  <table>
-    <thead><tr><th>Capability</th><th>Eve / Vercel answer</th><th>Why it matters</th></tr></thead>
-    <tbody>
-      <tr><td>Agent definition</td><td>Filesystem-first <code>agent/</code> directory</td><td>Makes the agent legible, portable within a repo, and easy to diff.</td></tr>
-      <tr><td>Execution</td><td>Vercel Functions</td><td>Deploys naturally into Vercel’s serverless runtime.</td></tr>
-      <tr><td>Durability</td><td>Vercel Workflows</td><td>Supports long-running work, waits, resumptions, and checkpoints.</td></tr>
-      <tr><td>Sandboxing</td><td>Vercel Sandbox</td><td>Enables isolated execution for risky code/tool steps.</td></tr>
-      <tr><td>Models</td><td>AI Gateway</td><td>Centralizes model routing, fallback, usage, and provider abstraction.</td></tr>
-      <tr><td>Credentials</td><td>Vercel Connect</td><td>Manages OAuth and API-key flows.</td></tr>
-      <tr><td>Observability</td><td>Vercel Observability</td><td>Tracks runs, tokens, latency, and performance.</td></tr>
-    </tbody>
-  </table>
-  <h3>3.2 The technical fellow read</h3>
-  <p>Eve is best understood as an <strong>agent harness</strong>, not just an agent framework. Most frameworks give you primitives for reasoning, tools, and orchestration. Eve tries to give you the missing production layer: durable execution, approvals, deployment, channels, schedules, sandboxing, and observability.</p>
-  <p>That is the right emphasis. The failure mode of many enterprise agent experiments is not that the LLM cannot choose a tool. It is that the surrounding system cannot guarantee identity boundaries, recover from partial failure, resume after approval, explain what happened, evaluate regressions, or support release discipline.</p>
-  <h3>3.3 The trade-off</h3>
-  <p>Eve’s simplicity is achieved by leaning into Vercel’s platform. That is rational for Vercel and attractive for greenfield web teams. It is less clean for enterprises standardized on Azure, Microsoft 365, Entra ID, private networking, internal compliance gates, and existing cloud operations practices. Eve gives a superb authoring model, but its runtime gravity is Vercel.</p>
-
-  <h2 id="azure-environment">4. The Azure agent environment</h2>
-  <p>Microsoft’s agent ecosystem is powerful but distributed across several products and concepts. The core pieces are:</p>
-  <table>
-    <thead><tr><th>Need</th><th>Azure / Microsoft answer</th></tr></thead>
-    <tbody>
-      <tr><td>Agent SDK and orchestration</td><td>Microsoft Agent Framework</td></tr>
-      <tr><td>Managed agent hosting</td><td>Microsoft Foundry Agent Service</td></tr>
-      <tr><td>Models</td><td>Azure OpenAI and Foundry models</td></tr>
-      <tr><td>Enterprise identity</td><td>Microsoft Entra ID and managed identities</td></tr>
-      <tr><td>Secrets</td><td>Azure Key Vault</td></tr>
-      <tr><td>Long-running workflows</td><td>Azure Durable Functions or workflow patterns hosted around Foundry agents</td></tr>
-      <tr><td>Sandboxed execution</td><td>Azure Container Apps Jobs, AKS, or isolated containers</td></tr>
-      <tr><td>Retrieval and enterprise search</td><td>Azure AI Search, Microsoft Graph, Fabric, and domain-specific stores</td></tr>
-      <tr><td>Observability</td><td>Application Insights, Azure Monitor, OpenTelemetry, and Foundry tracing/evals</td></tr>
-      <tr><td>Governance</td><td>Azure Policy, RBAC, private networking, content safety, model management, data residency controls</td></tr>
-    </tbody>
-  </table>
-  <h3>4.1 Microsoft Agent Framework</h3>
-  <p>Microsoft Agent Framework is the authoring/orchestration layer. Microsoft describes it as a convergence of AutoGen and Semantic Kernel. The direction is obvious: make agent building approachable while retaining enterprise concerns such as state, type safety, middleware, telemetry, workflow orchestration, model support, and integration with Microsoft’s cloud platform.<sup><a href="#src-ms-agent-framework">2</a></sup></p>
-  <p>In practice, that means Microsoft’s framework is <strong>code-first</strong>. You define agents and workflows in Python or .NET, wire tools and middleware, then deploy or host the result using Azure/Foundry primitives.</p>
-  <h3>4.2 Microsoft Foundry Agent Service</h3>
-  <p>Foundry Agent Service is the managed platform layer. It supports prompt agents and hosted agents, managed endpoints, scaling, versioning, identity, tracing, evaluation, publishing, and enterprise security features such as Entra identity, private networking, and RBAC.<sup><a href="#src-foundry-agent-service">3</a></sup></p>
-  <p>This is not Eve, but it is arguably the stronger enterprise substrate. It fits organizations that already rely on Microsoft identity, Microsoft 365, Azure networking, Azure governance, and regulated deployment processes.</p>
-  <h3>4.3 The gap</h3>
-  <p>The missing abstraction is the filesystem. Microsoft has a strong runtime and enterprise cloud substrate, but the developer interface is still mostly SDK-first and portal-first. Eve’s advantage is not that Vercel has more enterprise primitives than Azure. It is that Eve gives developers a highly legible way to package an agent as a product.</p>
-
-  <h2 id="azure-framework">5. Designing a filesystem agent framework on Azure</h2>
-  <p>An Azure-native filesystem agent framework should not mimic Eve line by line. It should preserve the important idea—the agent repository is the product boundary—while compiling to Microsoft’s stronger enterprise runtime.</p>
-  <h3>5.1 A proposed repository structure</h3>
-  <pre><code>agent/
-  agent.yaml
-  instructions.md
-
-  skills/
-    discovery-interview.md
-    write-prd.md
-    generate-test-plan.md
-    summarize-evidence.md
-
-  tools/
-    azure-devops/
-      tool.yaml
-      handler.py
-      schema.json
-    graph-mail/
-      tool.yaml
-      handler.py
-      schema.json
-    service-now/
-      tool.yaml
-      handler.py
-      schema.json
-
-  subagents/
-    researcher/
-      agent.yaml
-      instructions.md
-      skills/
-    architect/
-      agent.yaml
-      instructions.md
-      skills/
-    evaluator/
-      agent.yaml
-      instructions.md
-      evals/
-
+    query_customer.ts
+    create_ticket.ts
   memory/
-    project-context.yaml
-    retrieval-indexes.yaml
-
+    policy.yaml
+  subagents/
+    investigator/
+      instructions.md
+      tools/
+        search.ts
   approvals/
-    external-send.yaml
-    production-write.yaml
-    pii-export.yaml
-
-  workflows/
-    delivery-readiness.yaml
-    daily-client-briefing.yaml
-
+    refund.yaml
   evals/
-    regression.yaml
-    golden-tasks.yaml
-    red-team.yaml
+    refund_policy.eval.yaml
+  schedules/
+    daily_digest.yaml
+  channels/
+    slack.yaml
+    http.yaml</code></pre><pre><code>agent dev
+agent test
+agent eval
+agent deploy --target azure
+agent deploy --target aws
+agent deploy --target gcp</code></pre><p>The winning design principle is simple: <strong>the filesystem is the product surface; the cloud is an implementation detail.</strong></p></section><section id='why-files'><h2>2. Why filesystem-first is the right primitive</h2><p>Most agent frameworks start from runtime objects: agents, tools, graphs, routers, memories, evaluators. That is natural for library authors, but it is not how enduring software systems are governed. Real systems are governed through files, pull requests, build artifacts, deployment manifests, test fixtures, logs, and policy.</p><p>A filesystem-first agent framework makes behavior concrete. <code>instructions.md</code> is not a blob hidden in a SaaS dashboard. A tool is not a row in a control plane. A skill is not a prompt fragment lost in a database. An eval is not a spreadsheet someone forgot to update. A schedule is not some cron thing in production. All of them are source.</p><p>This also gives humans and coding agents a clean collaboration model. A human can say, “Add a skill for handling EU refunds.” A coding agent can create <code>skills/eu-refunds.md</code>, add an eval under <code>evals/</code>, update policy, and open a pull request. That is better than clicking through an agent console until behavior changes.</p><div class='callout'><strong>Provocation:</strong> agent frameworks should look less like LangChain graphs and more like Next.js, Rails, and Unix. The directory is the app.</div></section><section id='architecture'><h2>3. The core architecture</h2><p>A cloud-agnostic filesystem agent framework should have three layers:</p><pre><code>Authoring Layer
+  Files, conventions, schemas, local dev server, tests, evals
 
-  deploy/
-    azure.yaml
-    local.yaml</code></pre>
-  <h3>5.2 Compiler architecture</h3>
-  <p>The framework should have a compiler that converts the repository into a normalized agent graph:</p>
-  <pre><code>agent repository
-  → parser
-  → schema validator
-  → capability graph
-  → policy checker
-  → Microsoft Agent Framework generator
-  → Azure deployment adapter</code></pre>
-  <p>The normalized graph is the important internal artifact. It should contain agents, subagents, skills, tools, tool schemas, approval gates, workflow edges, memory bindings, eval suites, deployment targets, and permissions. Once that exists, Azure becomes a target rather than the definition itself.</p>
-  <h3>5.3 Azure mapping</h3>
-  <table>
-    <thead><tr><th>Filesystem object</th><th>Azure implementation</th></tr></thead>
-    <tbody>
-      <tr><td><code>instructions.md</code></td><td>System/developer instructions injected into Microsoft Agent Framework or Foundry hosted agent definitions.</td></tr>
-      <tr><td><code>skills/*.md</code></td><td>Reusable prompt procedures, examples, and task policies surfaced as callable capabilities or context packs.</td></tr>
-      <tr><td><code>tools/*</code></td><td>Python/.NET tool handlers with JSON Schema contracts, exposed through Microsoft Agent Framework or MCP where appropriate.</td></tr>
-      <tr><td><code>subagents/*</code></td><td>Nested Microsoft Agent Framework agents with bounded tool access and separate instructions.</td></tr>
-      <tr><td><code>workflows/*.yaml</code></td><td>Graph workflows in Microsoft Agent Framework; long-running steps backed by Durable Functions when needed.</td></tr>
-      <tr><td><code>approvals/*.yaml</code></td><td>Middleware gates plus Teams, email, or web approval UI; enforced before high-risk tools execute.</td></tr>
-      <tr><td><code>memory/*.yaml</code></td><td>Azure AI Search indexes, Cosmos DB, SQL, Blob Storage, or project-specific retrieval stores.</td></tr>
-      <tr><td><code>deploy/azure.yaml</code></td><td>Foundry Agent Service, Azure Container Apps, AKS, Azure Functions, managed identity, Key Vault, App Insights, and networking configuration.</td></tr>
-      <tr><td><code>evals/*.yaml</code></td><td>Foundry evals, PromptFlow-style regression suites, custom harnesses, and CI gates.</td></tr>
-    </tbody>
-  </table>
-  <h3>5.4 Example agent.yaml</h3>
-  <pre><code>name: client-delivery-agent
-runtime: microsoft-agent-framework
+Compilation Layer
+  Static analysis, tool discovery, prompt assembly, policy checks, manifest generation
+
+Runtime Layer
+  Durable runs, model calls, tool execution, sandboxing, memory, approvals, tracing, deployment adapters</code></pre><p>Begin with the authoring layer. The authoring layer is what developers fall in love with. The runtime is what enterprises require. The compiler is what lets you satisfy both.</p><h3>The portable manifest</h3><p>The source directory should compile into a deterministic, machine-friendly manifest:</p><pre><code>name: customer_refund_agent
+version: 0.4.2
 model:
-  provider: azure-openai
-  deployment: gpt-4.1
-identity:
-  type: managed-identity
-  allowed_scopes:
-    - graph.mail.read
-    - azuredevops.work_items.read
-memory:
-  retrieval:
-    - project-docs
-    - delivery-playbook
+  provider: openai
+  model: gpt-5.4
+instructions:
+  file: instructions.md
+skills:
+  - id: refund_policy
+    file: skills/refund-policy.md
 tools:
-  - azure-devops
-  - graph-mail
+  - name: query_order
+    source: tools/query_order.ts
+    risk: read
+  - name: issue_refund
+    source: tools/issue_refund.ts
+    risk: write
+    approval_required: true
+runtime:
+  durability: required
+  sandbox: required
+  max_run_time: 8h
+observability:
+  traces: opentelemetry</code></pre><p>The compiler should produce cloud-specific deployment artifacts from that manifest. For Azure, it might generate a Foundry Hosted Agent deployment, a Durable Functions orchestration, or an Azure Container Apps job. For Google Cloud, it might target ADK, Agent Platform Runtime, Workflows, Cloud Run, or GKE. For AWS, it might target Bedrock AgentCore Runtime, Step Functions, Lambda, ECS/Fargate, or EKS.</p><p>The source remains stable. The deployment substrate changes.</p></section><section id='runtime'><h2>4. Runtime design decisions</h2><div class='grid'><div class='card'><h3>Durability first</h3><p>Agents wait on model calls, flaky APIs, human approvals, retries, and rate limits. The agent loop itself should be durable. Model calls, tool calls, approval waits, and memory writes should be durable steps.</p></div><div class='card'><h3>Tools as ordinary code</h3><p>Tool authoring should feel boring, but tool execution should be highly controlled. Every tool needs schema, description, risk classification, auth requirements, timeout, retry policy, idempotency strategy, approval policy, network policy, and trace redaction.</p></div><div class='card'><h3>Sandbox by default</h3><p>Any agent that writes files, executes code, browses, installs packages, or processes untrusted documents needs sandboxing as a baseline feature.</p></div><div class='card'><h3>Memory as event log</h3><p>Start with event-sourced memory before semantic memory. Every memory should know where it came from, when it was observed, whether it was inferred, when it expires, and which agents may read it.</p></div><div class='card'><h3>Observability for cognition</h3><p>Agent traces must answer: what did the agent believe it was doing, which instructions were active, which tools were chosen, what evidence was used, and where cost and latency accumulated?</p></div><div class='card'><h3>Evals compile with the agent</h3><p>An agent without evals should deploy with a warning. A high-risk agent without evals should fail deployment. Evals should run locally, in CI, and against deployed environments.</p></div></div><h3>Trace events</h3><pre><code>agent.run.started
+agent.instructions.loaded
+agent.skill.selected
+agent.model.requested
+agent.model.completed
+agent.tool.proposed
+agent.tool.approved
+agent.tool.executed
+agent.memory.read
+agent.memory.written
+agent.policy.blocked
+agent.eval.assertion_failed
+agent.run.completed</code></pre></section><section id='clouds'><h2>5. Cloud adapter strategy</h2><p>The right abstraction is not “write once, run identically everywhere.” That is usually a lie. The right abstraction is: <strong>write once, preserve semantics, exploit the target.</strong></p><table><thead><tr><th>Target</th><th>Best fit</th><th>Likely mappings</th></tr></thead><tbody><tr><td>Azure</td><td>Enterprise identity, Microsoft 365, Teams, Entra ID, private networking, governance.</td><td>Foundry Hosted Agents, Durable Functions, Container Apps, Blob Storage, Cosmos DB, Azure AI Search, Key Vault, Azure Monitor.</td></tr><tr><td>Google Cloud</td><td>Model-heavy, data-heavy, BigQuery-heavy workloads; ADK and Agent Platform Runtime.</td><td>ADK, Agent Platform Runtime, Cloud Run, Workflows, Cloud Storage, Firestore, BigQuery, Cloud Trace.</td></tr><tr><td>AWS</td><td>Broadest primitive set, Step Functions, Bedrock, mature IAM, production controls.</td><td>Bedrock AgentCore Runtime, Step Functions, Lambda, ECS/Fargate, S3, DynamoDB, OpenSearch, CloudWatch.</td></tr><tr><td>Kubernetes</td><td>Maximum portability and control.</td><td>Temporal, Restate, DBOS, Postgres event log, object storage, OpenTelemetry collector.</td></tr></tbody></table><p>Do not hide cloud differences. Isolate them behind adapters. The Azure, AWS, Google, local, and Kubernetes adapters should be replaceable packages. The framework should survive any one provider becoming unattractive.</p></section><section id='mvp'><h2>6. Recommended MVP</h2><p>Do not start with every cloud. Start with the smallest product that proves the thesis.</p><pre><code>Phase 1: Local compiler and local runtime
+Phase 2: One cloud adapter
+Phase 3: Durable execution
+Phase 4: Evals and traces
+Phase 5: Second cloud adapter</code></pre><p>Build:</p><pre><code>agent init
+agent dev
+agent run
+agent compile
+agent eval
+agent deploy --target local
+agent deploy --target azure</code></pre><p>Support:</p><pre><code>instructions.md
+agent.yaml
+tools/
+skills/
+evals/
+.agent/runs trace output</code></pre><p>Defer subagents, marketplace, visual builder, SaaS control plane, long-term memory, browser automation, and enterprise RBAC UI. The core test is whether the directory abstraction feels inevitable.</p></section><section id='principles'><h2>7. Opinionated design principles</h2><ol><li><strong>The agent directory is the API.</strong> If a feature exists only in a cloud console, it is not part of the framework yet.</li><li><strong>The compiler is the control plane.</strong> It should validate, type-check, assemble, package, and explain the agent.</li><li><strong>Every run is an artifact.</strong> Inputs, instructions, skills, model calls, tool calls, approvals, memory operations, costs, latency, and final outputs should be inspectable.</li><li><strong>Dangerous tools require explicit policy.</strong> Anything that sends email, moves money, updates records, deletes files, publishes content, or changes permissions needs risk metadata and approval behavior.</li><li><strong>Skills are source code.</strong> Natural-language instructions are behavioral code. Treat them with review, tests, versioning, and rollback.</li></ol><pre><code>┌─────────────────────┐
+│  Agent Directory    │
+└─────────┬───────────┘
+          ▼
+┌─────────────────────┐
+│  Agent Compiler     │
+└─────────┬───────────┘
+          ▼
+┌─────────────────────┐
+│ Portable Manifest   │
+└─────┬───────┬───────┘
+      ▼       ▼       ▼
+   Azure    Google    AWS</code></pre></section><section id='101'><h2>8. Building with the framework 101: a PDF summarization agent</h2><p>The best way to understand the framework is to build something ordinary: an agent that summarizes PDFs. It receives a PDF, extracts text, chunks content, summarizes each chunk, synthesizes a final summary, saves an artifact, and records a trace.</p><pre><code>agent init pdf-summarizer
+cd pdf-summarizer</code></pre><pre><code>pdf-summarizer/
+  agent/
+    instructions.md
+    agent.yaml
+    tools/
+    skills/
+    evals/
+    fixtures/
+  .agent/
+    runs/
+    compiled/</code></pre><h3>Manifest</h3><pre><code>name: pdf_summarizer
+version: 0.1.0
+model:
+  provider: openai
+  model: gpt-5.4
+  temperature: 0.2
+runtime:
+  durability: required
+  sandbox: required
+  max_run_time: 30m
+input:
+  type: file
+  accepted_mime_types:
+    - application/pdf
+policy:
+  allow_external_network: false
+  allow_persistent_memory: false
+  require_page_references: true</code></pre><h3>Instructions</h3><pre><code># PDF Summarizer Agent
+
+You summarize PDF documents for a technical reader.
+
+Return Markdown with these sections:
+1. Executive Summary
+2. Document Structure
+3. Key Claims
+4. Important Details
+5. Risks, Gaps, or Ambiguities
+6. Actionable Takeaways
+7. Page-Referenced Notes
+
+Rules:
+- Use only the uploaded PDF.
+- Do not invent facts.
+- Include page references when available.
+- If extraction quality is poor, say so directly.</code></pre><h3>Tools</h3><p>Use small, boring tools: <code>extract_pdf_text</code>, <code>chunk_document</code>, and <code>write_artifact</code>. The extraction tool does not summarize. The chunking tool does not interpret. The artifact writer does not call models. Narrow tools make traces readable.</p><pre><code>tool: extract_pdf_text
+input: filePath
+output: pages[], extractionQuality, warnings
+risk: read
+
+tool: chunk_document
+input: pages[], targetTokens
+output: chunks[]
+risk: read
+
+tool: write_artifact
+input: filename, content
+output: artifactPath
+risk: write</code></pre><h3>Run and inspect</h3><pre><code>agent compile
+agent run agent/fixtures/sample.pdf
+agent trace latest
+agent eval</code></pre><p>The local runtime should create a run directory containing input, messages, tool calls, trace, artifacts, and final output. This is the first payoff: the agent does not merely answer; it leaves behind an auditable run.</p></section><section id='201'><h2>9. Building with the framework 201: reading PDFs from Azure Blob Storage</h2><p>The 101 example used a local file. Production documents usually arrive through object storage. The 201 version reads a PDF from Azure Blob Storage, downloads it into the sandbox workspace, summarizes it, and uploads the summary back to Blob Storage.</p><pre><code>PDF lands in Azure Blob Storage
+        ↓
+Blob-created event fires
+        ↓
+Agent run starts
+        ↓
+Agent downloads PDF into sandbox workspace
+        ↓
+Agent extracts, chunks, summarizes
+        ↓
+Summary uploads to output container</code></pre><h3>Manifest upgrade</h3><pre><code>name: pdf_summarizer
+version: 0.2.0
+input:
+  type: azure_blob
+  accepted_mime_types:
+    - application/pdf
+azure_storage:
+  account: ${AZURE_STORAGE_ACCOUNT}
+  input_container: incoming-pdfs
+  output_container: summarized-pdfs
+  auth: managed_identity
+policy:
+  allowed_blob_containers:
+    read:
+      - incoming-pdfs
+    write:
+      - summarized-pdfs</code></pre><p>The key design decision: cloud input is normalized into a local workspace file. The existing <code>extract_pdf_text</code> tool still receives a local <code>filePath</code>. It should not know where the file came from.</p><h3>Azure boundary tools</h3><pre><code>tool: download_azure_blob
+input: accountName, containerName, blobName
+output: filePath, originalBlobName, contentType, sizeBytes
+risk: read
+policy: may read only incoming-pdfs and application/pdf
+
+tool: upload_azure_blob
+input: accountName, containerName, blobName, localFilePath, contentType
+output: blobUrl
+risk: write
+policy: may write only summarized-pdfs from artifact directory</code></pre><p>Use managed identity rather than account keys. Assign the runtime identity <code>Storage Blob Data Reader</code> on the input container and <code>Storage Blob Data Contributor</code> on the output container. Do not grant broad storage account access just because this is “only summarization.” Small agents become exfiltration tools when storage access is sloppy.</p><h3>Workflow</h3><pre><code>workflow summarize_pdf_from_azure:
+  downloaded = download_azure_blob(input)
+  extracted = extract_pdf_text(downloaded.filePath)
+  chunks = chunk_document(extracted.pages)
+  chunkSummaries = summarize each chunk
+  final = synthesize chunkSummaries
+  artifact = write_artifact(summary.md, final)
+  upload_azure_blob(output container, artifact.path)</code></pre><h3>Event channel</h3><pre><code>type: azure_blob_event
+name: summarize_pdf_when_blob_created
+container: incoming-pdfs
+events:
+  - Microsoft.Storage.BlobCreated
+filters:
+  suffix:
+    - .pdf
+workflow: summarize_pdf_from_azure</code></pre><p>The source file declares intent. The Azure adapter chooses whether to implement it with Event Grid, a Blob-triggered Function, Durable Functions, or another event handler.</p></section><section id='301'><h2>10. Building with the framework 301: 100 PDFs and subagents</h2><p>The 301 version summarizes a corpus of 100 PDFs. That is no longer just document processing. It is coordination: discovery, batching, concurrency limits, partial failure handling, subagent assignment, intermediate artifacts, corpus-level synthesis, and provenance.</p><pre><code>List 100 PDFs from Azure Blob Storage
+        ↓
+Create a corpus run
+        ↓
+Spawn document subagents
+        ↓
+Each subagent summarizes one PDF
+        ↓
+Parent waits for structured results
+        ↓
+Batch synthesizers compress groups
+        ↓
+Corpus synthesizer writes overarching summary</code></pre><h3>Directory upgrade</h3><pre><code>agent/
+  workflows/
+    summarize_corpus_from_azure.workflow.ts
+    summarize_single_pdf.workflow.ts
+    synthesize_corpus.workflow.ts
+  subagents/
+    document_summarizer/
+      instructions.md
+    batch_synthesizer/
+      instructions.md
+    corpus_synthesizer/
+      instructions.md
+  schemas/
+    document_summary.schema.json
+    batch_summary.schema.json
+    corpus_summary.schema.json
+  tools/
+    list_azure_blobs.ts
+    download_azure_blob.ts
+    upload_azure_blob.ts
+    extract_pdf_text.ts
+    chunk_document.ts
+    write_artifact.ts</code></pre><h3>Manifest upgrade</h3><pre><code>name: pdf_corpus_summarizer
+version: 0.3.0
+input:
+  type: azure_blob_prefix
+corpus:
+  max_documents: 100
+  discovery:
+    mode: prefix
+  document_concurrency: 8
+  max_document_failures: 10
+  batch_size: 10
+  batch_concurrency: 3
+  synthesis_mode: hierarchical
 subagents:
-  - researcher
-  - evaluator
-approvals:
-  - external-send
-  - production-write
-evals:
-  required_before_deploy:
-    - regression
-    - red-team</code></pre>
-  <h3>5.5 The runtime behavior</h3>
-  <p>At runtime, the agent should enforce policy outside the model. The model may decide it wants to send an email, update a ticket, or execute code. The runtime should decide whether that is allowed, whether approval is required, which identity is used, which scopes apply, how the action is logged, and whether the trace needs redaction. The filesystem spec is the declared intent; Azure controls are the enforcement mechanism.</p>
+  document_summarizer:
+    output_schema: schemas/document_summary.schema.json
+  batch_synthesizer:
+    output_schema: schemas/batch_summary.schema.json
+  corpus_synthesizer:
+    output_schema: schemas/corpus_summary.schema.json</code></pre><p>The parent agent should not read all 100 PDFs directly. The parent coordinates. Document subagents process documents. Batch synthesizers compress groups. The corpus synthesizer works from structured summaries, not raw PDFs.</p><h3>Typed hierarchical compression</h3><pre><code>PDF → DocumentSummary
+DocumentSummary[] → BatchSummary
+BatchSummary[] → CorpusSummary</code></pre><p>This is the critical 301 idea. Reliable multi-agent systems are not swarms of chatty agents. They are typed compression pipelines with clear role boundaries.</p><h3>Parent workflow</h3><pre><code>workflow summarize_corpus_from_azure:
+  blobs = list_azure_blobs(prefix, maxDocuments=100)
+  manifest = write corpus-manifest.json
+  documentResults = fan out document_summarizer with concurrency 8
+  normalize failures using Promise.allSettled semantics
+  if failedCount &gt; maxDocumentFailures: fail safely
+  batches = group documentResults by 10
+  batchResults = fan out batch_synthesizer with concurrency 3
+  corpusSummary = corpus_synthesizer(batchResults, compact document summaries)
+  write corpus-summary.md and corpus-summary.json
+  upload artifacts to summarized-pdfs/corpus-runs/{runId}/</code></pre><h3>Partial failure policy</h3><pre><code>Fail the corpus run if discovery fails.
+Fail the corpus run if too many documents fail.
+Do not fail the corpus run because one document fails.
+Always disclose coverage in the final summary.</code></pre><h3>The READY file pattern</h3><p>Do not start a corpus job on every individual BlobCreated event. A corpus needs a boundary. Use a sentinel file:</p><pre><code>incoming-pdfs/diligence/acme/_READY.json</code></pre><pre><code>{
+  corpusId: acme-diligence-2026-07,
+  prefix: diligence/acme/,
+  expectedDocuments: 100,
+  createdBy: upstream-diligence-export,
+  createdAt: 2026-07-02T21:00:00Z
+}</code></pre><p>When <code>_READY.json</code> appears, the agent summarizes the prefix. This prevents starting a corpus summary while only 37 of 100 PDFs have arrived.</p><h3>Final report coverage</h3><pre><code># Corpus Summary
 
-  <h2 id="differences">6. How the Azure version would differ from Eve</h2>
-  <table>
-    <thead><tr><th>Dimension</th><th>Vercel Eve</th><th>Azure-native filesystem framework</th></tr></thead>
-    <tbody>
-      <tr><td>Primary interface</td><td>Filesystem-first</td><td>Filesystem-first spec plus compiler</td></tr>
-      <tr><td>Runtime</td><td>Vercel Functions and Vercel platform services</td><td>Foundry Agent Service, Microsoft Agent Framework, Durable Functions, Container Apps, AKS, or Functions</td></tr>
-      <tr><td>Language center</td><td>TypeScript / JavaScript</td><td>Python and .NET first, with TypeScript possible later</td></tr>
-      <tr><td>Identity</td><td>Vercel Connect and app credentials</td><td>Entra ID, managed identity, RBAC, conditional access</td></tr>
-      <tr><td>Enterprise data</td><td>Connectors and custom tools</td><td>Microsoft Graph, Azure AI Search, Fabric, SharePoint, Teams, Dataverse, client VNET resources</td></tr>
-      <tr><td>Governance</td><td>Platform observability and approvals</td><td>Azure Policy, private networking, RBAC, data residency, Key Vault, App Insights, OpenTelemetry, compliance gates</td></tr>
-      <tr><td>Deployment posture</td><td>Optimized for Vercel-native app teams</td><td>Optimized for enterprise Azure estates and regulated clients</td></tr>
-      <tr><td>Strategic risk</td><td>Elegant but platform-coupled</td><td>More complex but more governable and client-aligned</td></tr>
-    </tbody>
-  </table>
-  <p>The Azure version should be less magical and more explicit. Eve’s advantage is developer elegance. Azure’s advantage is enterprise control. A serious Azure filesystem framework should not hide that trade-off. It should make the agent legible at the repository level and enforceable at the cloud level.</p>
+## Coverage
+- Input container: incoming-pdfs
+- Prefix: diligence/acme/
+- Documents discovered: 100
+- Documents summarized: 96
+- Partial summaries: 1
+- Failed documents: 3
+- Synthesis mode: hierarchical
+- Batch size: 10
 
-  <h2 id="why-build">7. Why build it</h2>
-  <h3>7.1 For enterprise adoption</h3>
-  <p>Large clients do not merely need agents that work in demos. They need agents that can be reviewed, approved, deployed, monitored, and retired. They need identity boundaries, networking boundaries, data boundaries, and release gates. Azure already has many of those primitives. The missing piece is a clean authoring and packaging layer.</p>
-  <h3>7.2 For forward deployed engineering</h3>
-  <p>A filesystem framework is especially useful for forward deployed engineering because it turns engagements into reusable assets. A team can walk into a client engagement with a reference repo, client-specific skills, approved tool packs, prebuilt eval suites, security policy templates, deployment adapters, and a demo-to-production path that maps to Azure governance.</p>
-  <p>This is better than a pile of notebooks, prompts, and ad hoc integrations. It is a repeatable productized delivery system.</p>
-  <h3>7.3 For auditability</h3>
-  <p>Auditability is not just logs. It is the ability to answer: What was the agent instructed to do? What tools could it call? Which data sources could it access? Which actions required approval? Which evals were required before release? Which version was running when a decision was made?</p>
-  <p>A filesystem spec plus Git plus Azure observability can answer these questions cleanly.</p>
-  <h3>7.4 For portability</h3>
-  <p>Even if the first compiler targets Azure, the agent definition should not be inseparable from Azure. The right abstraction is:</p>
-  <pre><code>agent repository → normalized agent graph → runtime adapter → deployed agent</code></pre>
-  <p>Today’s adapter might target Foundry Agent Service. Tomorrow’s adapter might target Vercel, AWS, on-prem Kubernetes, or a local developer runtime. That is the strategic value: avoid confusing the agent specification with the agent host.</p>
-
-  <h2 id="implementation-plan">8. Implementation plan</h2>
-  <h3>Phase 1: Define the spec</h3>
-  <p>Create a small, opinionated schema for the core objects: Agent, Skill, Tool, Subagent, Workflow, ApprovalPolicy, MemoryBinding, EvalSuite, and DeploymentTarget. Keep the schema boring. YAML for configuration, Markdown for instruction-bearing artifacts, JSON Schema for tool inputs/outputs, Python or .NET for handlers.</p>
-  <h3>Phase 2: Build a local compiler</h3>
-  <p>The first compiler should not deploy anything. It should load the repository, validate schemas, construct a capability graph, generate a human-readable manifest, run static checks, and run local evals.</p>
-  <pre><code>atlas validate ./agent
-atlas graph ./agent --output manifest.json
-atlas eval ./agent --suite evals/regression.yaml</code></pre>
-  <h3>Phase 3: Generate Microsoft Agent Framework code</h3>
-  <p>Generate a minimal Python and/or .NET project from the normalized graph. Do not ask every project team to hand-wire the same orchestration code. Generate it.</p>
-  <pre><code>atlas generate ./agent --target microsoft-agent-framework --language python</code></pre>
-  <p>The generated project should include agent definitions, tool registration, subagent registration, workflow definitions, middleware for policy checks, OpenTelemetry instrumentation, eval hooks, and deployment manifests.</p>
-  <h3>Phase 4: Add Azure deployment adapters</h3>
-  <p>Support two deployment paths: a Foundry hosted agent path that packages generated code as a hosted agent, and an Azure-native service path that deploys to Azure Container Apps or AKS with Durable Functions for long-running workflows and App Insights for telemetry.</p>
-  <pre><code>atlas deploy ./agent --target foundry --environment prod</code></pre>
-  <h3>Phase 5: Add governance gates</h3>
-  <p>Add gates that fail the build if a high-risk tool lacks an approval policy, a tool uses a raw secret instead of Key Vault, a data source crosses a declared residency boundary, an external-write tool lacks trace redaction, eval coverage is missing for critical skills, a subagent has broader permissions than its parent, or a workflow lacks retry and failure behavior.</p>
-  <h3>Phase 6: Package reusable packs</h3>
-  <pre><code>packs/
-  azure-devops-tools/
-  jira-tools/
-  service-now-tools/
-  product-strategy-skills/
-  secure-code-review-skills/
-  fde-delivery-evals/
-  regulated-industry-policies/</code></pre>
-  <p>These should be versioned and internally certified. Client teams should consume them the way they consume infrastructure modules or internal libraries.</p>
-
-  <h2 id="risks">9. Risks and hard questions</h2>
-  <h3>9.1 The filesystem can become a junk drawer</h3>
-  <p>A folder structure is not architecture by itself. Without strict schemas, naming conventions, ownership, and tests, a filesystem-first framework degenerates into prompt sprawl with nicer folders.</p>
-  <h3>9.2 Declarative configuration can hide real complexity</h3>
-  <p>Declarative systems are powerful until debugging requires understanding the compiler, generated code, cloud runtime, and model behavior simultaneously. The framework must provide excellent introspection: generated manifests, dependency graphs, dry runs, trace replay, and explanations of why a tool was available.</p>
-  <h3>9.3 Human-readable does not mean safe</h3>
-  <p>Markdown instructions are readable, but they are not enforceable. Policies must be enforced in middleware, identity, network controls, tool wrappers, and approval gates. A skill file saying “do not export customer data” is not a control.</p>
-  <h3>9.4 Runtime portability is harder than spec portability</h3>
-  <p>A generic agent spec can be portable. Production semantics are not. Durable execution, identity, sandboxing, and observability differ across platforms. The compiler should expose those differences rather than pretending they do not exist.</p>
-  <h3>9.5 Azure complexity is real</h3>
-  <p>Azure gives you enterprise primitives, but it also gives you surface area: subscriptions, resource groups, VNets, managed identities, private endpoints, RBAC, Key Vault, App Insights, and deployment templates. A filesystem agent framework must simplify this without hiding the controls that enterprises actually need.</p>
-
-  <h2>10. Recommended position</h2>
-  <p>Do not position an Azure filesystem framework as “Eve for Azure.” That undersells it and accepts Vercel’s framing. The stronger position is:</p>
-  <div class="callout"><strong>An Azure-native filesystem agent framework is an enterprise agent specification and compiler. It gives teams Eve-like authoring ergonomics while targeting Microsoft’s stronger enterprise runtime: Foundry, Entra, Azure networking, Durable Functions, OpenTelemetry, App Insights, Key Vault, and Microsoft 365 distribution.</strong></div>
-  <p>For a forward deployed engineering organization, this becomes a delivery accelerant. It gives teams a standard way to package agent behavior, client-specific knowledge, approved tools, evals, and deployment policy. It also gives clients something they can inspect and govern.</p>
-  <blockquote><strong>The agent repository is the product boundary. The runtime is an adapter.</strong></blockquote>
-  <p>That is the idea worth carrying forward from Eve. Not Vercel Functions. Not a particular folder name. The important move is to make the agent legible, portable, reviewable, and deployable by turning its behavior into a structured repository.</p>
-
-  <h2 id="sources">Sources</h2>
-  <ol class="footnotes">
-    <li id="src-vercel-docs"><a href="https://vercel.com/docs/eve">Vercel Docs: Eve</a>. Defines Eve as a filesystem-first framework for durable backend AI agents, describes the <code>agent/</code> directory model, Vercel Functions target, beta status, and use of Workflows, Sandbox, AI Gateway, Connect, and Observability.</li>
-    <li id="src-ms-agent-framework"><a href="https://learn.microsoft.com/en-us/agent-framework/overview/">Microsoft Learn: Microsoft Agent Framework Overview</a>. Describes Agent Framework as combining AutoGen-style agent abstractions with Semantic Kernel enterprise features including state, type safety, filters, telemetry, model support, embeddings, and workflows.</li>
-    <li id="src-foundry-agent-service"><a href="https://learn.microsoft.com/en-us/azure/foundry/agents/overview">Microsoft Learn: What is Microsoft Foundry Agent Service?</a>. Describes prompt agents, hosted agents, managed endpoints, scaling, identity, observability, tracing, evaluations, publishing, Entra identity, private networking, RBAC, and governance capabilities.</li>
-    <li id="src-vercel-launch"><a href="https://vercel.com/blog/introducing-eve">Vercel Blog: Introducing Eve</a>. Launch announcement describing Eve as open source and emphasizing durable execution, sandboxed compute, human-in-the-loop approvals, subagents, evals, and production infrastructure.</li>
-    <li><a href="https://azure.microsoft.com/en-us/blog/introducing-microsoft-agent-framework/">Microsoft Azure Blog: Introducing Microsoft Agent Framework</a>. Announces Microsoft Agent Framework public preview, convergence of AutoGen and Semantic Kernel, Azure AI Foundry integration, MCP, A2A, workflows, observability, durability, and compliance positioning.</li>
-  </ol>
-</article>
-</body>
-</html>
+This summary is based on 97 usable document summaries. Three documents failed and are listed in the document index.</code></pre><p>The first paragraph of the final report should tell the reader how much of the corpus was actually analyzed. Anything else invites overconfidence.</p><h3>What 301 teaches</h3><p>A normal script can summarize one PDF. A decent cloud function can summarize a PDF from Blob Storage. But a filesystem-based agent framework can give you source-controlled roles, subagent directories, typed inter-agent contracts, durable fan-out/fan-in, bounded concurrency, partial failure tolerance, hierarchical synthesis, auditable traces, corpus manifests, human-readable and machine-readable artifacts, and portable cloud targets.</p><div class='callout'><strong>The product philosophy still holds:</strong> the agent is a directory. The subagent is a subdirectory. The run is an artifact tree. The corpus is a manifest. The cloud is a target. The framework is the compiler and runtime contract between them.</div></section><section id='sources'><h2>11. Source notes</h2><p>This report is grounded in public documentation and product materials for Vercel Eve, Vercel Workflows, Microsoft Foundry Agent Service, Azure Durable Functions, Azure Blob Storage events and SDKs, Azure managed identities, Google ADK and Agent Platform, AWS Bedrock AgentCore, AWS Step Functions, and OpenTelemetry. For a production version of the report, keep these as live citations and verify product names, beta status, limits, and pricing before publishing externally.</p><ul><li>Vercel Eve documentation and launch materials</li><li>Microsoft Foundry Agent Service documentation</li><li>Azure Durable Functions fan-out/fan-in and orchestration documentation</li><li>Azure Blob Storage JavaScript SDK, Event Grid, and managed identity documentation</li><li>Google ADK and Gemini Enterprise Agent Platform documentation</li><li>AWS Bedrock AgentCore and Step Functions documentation</li><li>OpenTelemetry documentation</li></ul></section></article></main></body></html>

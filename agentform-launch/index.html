@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Introducing Agentform</title>
+  <meta name="description" content="Launch post for Agentform, a filesystem-native way to define, test, and run agents.">
+  <style>
+    :root{--bg:#fbfaf7;--ink:#171717;--muted:#64615a;--line:#ded8cb;--soft:#f3efe6;--code:#eee8dc;--accent:#2454a6;--accent2:#8b5e1a}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:18px/1.68 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif}main{max-width:860px;margin:auto;padding:56px 22px 96px}h1,h2,h3{line-height:1.12;letter-spacing:-.03em}h1{font-size:clamp(2.6rem,7vw,5.4rem);margin:.1em 0 .25em}h2{font-size:2rem;margin:2.2em 0 .45em;padding-top:.75em;border-top:1px solid var(--line)}p{margin:1em 0}.kicker{text-transform:uppercase;letter-spacing:.12em;font-size:.76rem;font-weight:800;color:var(--accent2)}.dek{font-size:1.25rem;color:#333;max-width:760px}.meta{color:var(--muted);font-size:.95rem}.callout{border-left:5px solid var(--accent);background:#fff;padding:16px 18px;border-radius:10px;margin:24px 0;box-shadow:0 1px 0 rgba(0,0,0,.04)}pre{background:var(--code);padding:16px;overflow:auto;border-radius:12px;border:1px solid var(--line);font-size:.88rem;line-height:1.45}code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}p code,li code{background:var(--code);padding:1px 5px;border-radius:5px}ul{padding-left:24px}a{color:var(--accent)}.rule{height:1px;background:var(--line);margin:34px 0}@media(max-width:680px){body{font-size:16px}main{padding-top:34px}}
+  </style>
+</head>
+<body>
+<main>
+<article>
+<p class="kicker">Launch post</p>
+<h1>Introducing Agentform</h1>
+<p class="dek">A filesystem-native way to define, test, and run agents.</p>
+<p class="meta">Agentform is built around one simple idea: an agent should be a directory.</p>
+
+<p>Today we’re releasing the first version of <strong>Agentform</strong>, a source-first way to define agents as files, compile them into portable manifests, and prove their behavior locally before they ever touch a cloud runtime.</p>
+
+<p>The idea is simple:</p>
+
+<p><strong>An agent should be a directory.</strong></p>
+
+<p>Not a dashboard object. Not a pile of SDK calls. Not a prompt hidden in a database. Not a workflow diagram that only exists inside one cloud console.</p>
+
+<p>A directory.</p>
+
+<pre><code>agent/
+  agent.yaml
+  instructions.md
+  tools/
+  workflows/
+  skills/
+  evals/
+  fixtures/</code></pre>
+
+<p>That sounds almost too ordinary. But ordinary is the point.</p>
+
+<p>Files are the most durable interface we have in software. They can be read, reviewed, diffed, tested, versioned, copied, forked, and fixed. They work with Git. They work with CI. They work with coding agents. They work with humans under deadline pressure at 11:48 p.m. trying to understand why production behavior changed.</p>
+
+<p>That is the bar agents need to meet.</p>
+
+<h2>Why we built Agentform</h2>
+
+<p>Most agent development still feels too slippery.</p>
+
+<p>You can build something impressive quickly. That part is no longer hard. The hard part comes after the demo:</p>
+
+<ul>
+  <li>What exactly is the agent allowed to do?</li>
+  <li>Which instructions were active?</li>
+  <li>Which tools can it call?</li>
+  <li>Who changed the refund policy?</li>
+  <li>Did the evals pass?</li>
+  <li>What did the agent read?</li>
+  <li>Where did the output artifact come from?</li>
+  <li>Can I run the same thing locally before putting it in front of a customer?</li>
+</ul>
+
+<p>These questions sound boring. They are not. They are the difference between a toy and a system.</p>
+
+<p>The current agent ecosystem is rich, but fragmented. Azure Foundry, AWS AgentCore, Google ADK, LangGraph, OpenAI Agents SDK, Anthropic’s tools, Vercel Eve, and others are all moving fast. That is good. We do not need another framework trying to replace all of them.</p>
+
+<p>What we need is a better source layer.</p>
+
+<p>Agentform is that layer.</p>
+
+<p>It gives you a filesystem specification, a compiler, a local verification harness, evals, traces, artifacts, and a path to native runtimes later.</p>
+
+<div class="callout"><strong>The goal is not to compete with the clouds.</strong> The goal is to make agent behavior legible before it gets there.</div>
+
+<h2>What Agentform is</h2>
+
+<p>Agentform has three parts.</p>
+
+<p>First, a convention for defining agents as files.</p>
+
+<pre><code>agent/
+  agent.yaml              # manifest and runtime intent
+  instructions.md         # main behavioral contract
+  workflows/              # deterministic orchestration
+  tools/                  # typed executable capabilities
+  skills/                 # reusable natural-language procedures
+  evals/                  # behavioral tests
+  fixtures/               # test inputs
+  schemas/                # structured handoff contracts</code></pre>
+
+<p>Second, a compiler.</p>
+
+<p>The compiler reads the directory, validates it, finds tools and workflows, checks policy, produces diagnostics, and emits a portable manifest.</p>
+
+<pre><code>agent compile examples/pdf-summarizer</code></pre>
+
+<p>That manifest becomes the boundary between source and runtime.</p>
+
+<p>Third, a local harness.</p>
+
+<p>The local harness runs the compiled manifest on your machine. It records events, model calls, tool calls, traces, and artifacts.</p>
+
+<pre><code>agent run examples/pdf-summarizer --input examples/pdf-summarizer/fixtures/sample.pdf</code></pre>
+
+<p>After a run, you can inspect what happened:</p>
+
+<pre><code>.agent/
+  compiled/
+    manifest.json
+  runs/
+    run_abc123/
+      events.jsonl
+      trace.jsonl
+      artifacts/
+        summary.md</code></pre>
+
+<p>That is the basic promise: every run leaves evidence.</p>
+
+<h2>What Agentform is not</h2>
+
+<p>Agentform is not trying to become Azure Foundry. It is not trying to become AWS AgentCore. It is not trying to become Google ADK. It is not trying to become LangGraph. It is not trying to become a hosted agent control plane.</p>
+
+<p>Those systems should do what they are good at: managed runtime, scaling, identity, observability, sandboxing, deployment, integrations, and enterprise controls.</p>
+
+<p>Agentform is earlier in the lifecycle.</p>
+
+<p>It is for authoring, validating, running locally, testing, and producing a clean manifest that can later target native runtimes.</p>
+
+<p>The local runtime is a reference harness, not a religion.</p>
+
+<h2>The first proof: a PDF summarizer</h2>
+
+<p>The first example is deliberately simple: a PDF summarization agent.</p>
+
+<p>Not because summarizing PDFs is the future of software. It is not. But it is a good test case because it touches the whole system:</p>
+
+<ul>
+  <li>source layout</li>
+  <li>manifest compilation</li>
+  <li>typed tools</li>
+  <li>workflow execution</li>
+  <li>model calls</li>
+  <li>artifact writing</li>
+  <li>traces</li>
+  <li>evals</li>
+  <li>local deploy</li>
+</ul>
+
+<p>The example agent looks like this:</p>
+
+<pre><code>examples/pdf-summarizer/
+  agent/
+    agent.yaml
+    instructions.md
+    workflows/
+      summarize_pdf.workflow.ts
+    tools/
+      extract_pdf_text.ts
+      chunk_document.ts
+      write_artifact.ts
+    skills/
+      technical-summary.md
+    evals/
+      basic-summary.eval.yaml
+    fixtures/
+      sample.pdf</code></pre>
+
+<p>The workflow is intentionally plain:</p>
+
+<pre><code>extract PDF text
+chunk document
+summarize chunks
+write summary.md
+record events and trace</code></pre>
+
+<p>The proof is not that the summary is magical. The proof is that the system is inspectable.</p>
+
+<p>You can see which tool extracted the text. You can see which model was called. You can see which artifact was written. You can see whether the eval passed. You can rerun it locally.</p>
+
+<p>That is the foundation we want before adding cloud deployment, subagents, Docker sandboxing, or native runtime adapters.</p>
+
+<h2>Designed for coding agents</h2>
+
+<p>One of the reasons we chose a filesystem-first design is that coding agents are good at files.</p>
+
+<p>Claude Code, Codex, Cursor, and other frontier coding agents can read this structure, edit it, add tests, update tools, run evals, and make pull requests.</p>
+
+<p>That matters.</p>
+
+<p>A human can say:</p>
+
+<p>“Add an eval that fails if the PDF summary does not include page references.”</p>
+
+<p>A coding agent can add:</p>
+
+<pre><code>agent/evals/page-references.eval.yaml</code></pre>
+
+<p>Then run:</p>
+
+<pre><code>agent eval examples/pdf-summarizer</code></pre>
+
+<p>That is the loop we care about: agent behavior changed through source, tested through evals, reviewed through diffs.</p>
+
+<p>This is also why we include project files like <code>AGENTS.md</code> and <code>CLAUDE.md</code>. The framework should be understandable not only to humans, but to the tools humans are now using to build software.</p>
+
+<h2>The commands</h2>
+
+<p>The first release supports the core lifecycle:</p>
+
+<pre><code>agent init
+agent compile
+agent run
+agent eval
+agent deploy --target local
+agent plan --target azure
+agent plan --target aws
+agent plan --target vertex
+agent plan --target langgraph</code></pre>
+
+<p>The <code>plan</code> commands are important. They do not deploy to those platforms yet. They check whether the manifest can be mapped cleanly to future targets.</p>
+
+<p>That keeps us honest.</p>
+
+<p>If the local manifest quietly bakes in assumptions that make Azure, AWS, Vertex, Docker, or LangGraph impossible later, we want to know early.</p>
+
+<h2>Why this matters</h2>
+
+<p>The industry does not need another agent framework for its own sake.</p>
+
+<p>What it does need is a better operating model for agents.</p>
+
+<p>Agents are not just code. They are code plus instructions plus tools plus state plus model behavior plus policy plus traces plus evals. If those pieces are scattered across repos, dashboards, prompts, cloud settings, and notebooks, the system becomes hard to reason about.</p>
+
+<p>Putting the agent in a directory gives us a place to stand.</p>
+
+<ul>
+  <li>It makes the agent reviewable.</li>
+  <li>It makes the agent testable.</li>
+  <li>It makes the agent portable.</li>
+  <li>It makes the agent editable by humans and coding agents.</li>
+  <li>It makes local proof possible before cloud deployment.</li>
+</ul>
+
+<p>That is not glamorous infrastructure. It is useful infrastructure.</p>
+
+<p>And useful infrastructure is what lets the glamorous demos become real systems.</p>
+
+<h2>What comes next</h2>
+
+<p>This release is intentionally small.</p>
+
+<p>The next steps are clear:</p>
+
+<ol>
+  <li>Docker sandboxing for local tool execution.</li>
+  <li>Azure adapter planning and deployment.</li>
+  <li>LangGraph backend compilation for more complex workflows.</li>
+  <li>AWS and Vertex adapter paths.</li>
+  <li>Better trace inspection.</li>
+  <li>Subagent support.</li>
+  <li>Corpus-level examples, including batch PDF summarization.</li>
+</ol>
+
+<p>But the first milestone is simpler:</p>
+
+<p>Can an agent be a directory? Can it compile? Can it run locally? Can it produce artifacts? Can it prove behavior with evals? Can a coding agent safely extend it?</p>
+
+<p>Now the answer is yes.</p>
+
+<div class="rule"></div>
+
+<p>That is the release.</p>
+
+<p><strong>The agent is a directory.</strong></p>
+<p><strong>The tool is Agentform.</strong></p>
+</article>
+</main>
+</body>
+</html>

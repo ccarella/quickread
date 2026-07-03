@@ -3,22 +3,22 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PRD: Filesystem-Based Agent Framework</title>
-  <meta name="description" content="Implementation-ready PRD for a filesystem-based agent framework with local runtime, compiler, evals, and PDF summarizer proof agent.">
+  <title>PRD: Agent Directory Compiler and Local Harness</title>
+  <meta name="description" content="Revised PRD for a filesystem agent specification, compiler, and local verification harness with Anthropic API integration tests and native runtime adapter seams.">
   <style>
-    :root{--bg:#fbfaf7;--ink:#171717;--muted:#666;--line:#ded8cb;--soft:#f3efe6;--code:#eee8dc;--accent:#2454a6;--accent2:#8b5e1a;--ok:#0f6b42}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.65 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif}main{max-width:1040px;margin:auto;padding:56px 22px 96px}h1,h2,h3,h4{line-height:1.15;letter-spacing:-.025em}h1{font-size:clamp(2.2rem,6vw,4.8rem);margin:.1em 0 .25em}h2{font-size:1.9rem;margin:2.4em 0 .5em;padding-top:.8em;border-top:1px solid var(--line)}h3{font-size:1.25rem;margin:1.8em 0 .25em}h4{font-size:1.05rem;margin:1.4em 0 .2em}.kicker{text-transform:uppercase;letter-spacing:.12em;font-size:.76rem;font-weight:800;color:var(--accent2)}.dek{font-size:1.22rem;color:#333;max-width:860px}.meta{color:var(--muted);font-size:.95rem}.toc{background:var(--soft);border:1px solid var(--line);padding:18px 22px;border-radius:16px;margin:34px 0}.toc ol{columns:2;gap:36px}.callout{border-left:5px solid var(--accent);background:#fff;padding:16px 18px;border-radius:10px;margin:22px 0;box-shadow:0 1px 0 rgba(0,0,0,.04)}.verify{border-left:5px solid var(--ok);background:#fff;padding:16px 18px;border-radius:10px;margin:22px 0}.verify strong{color:var(--ok)}pre{background:var(--code);padding:16px;overflow:auto;border-radius:12px;border:1px solid var(--line);font-size:.88rem;line-height:1.45}code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}p code,li code{background:var(--code);padding:1px 5px;border-radius:5px}table{border-collapse:collapse;width:100%;margin:20px 0;background:#fff}th,td{border:1px solid var(--line);padding:10px;vertical-align:top}th{background:var(--soft);text-align:left}a{color:var(--accent)}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px}.card h3{margin-top:0}@media(max-width:720px){body{font-size:16px}.toc ol{columns:1}main{padding-top:32px}}
+    :root{--bg:#fbfaf7;--ink:#171717;--muted:#666;--line:#ded8cb;--soft:#f3efe6;--code:#eee8dc;--accent:#2454a6;--accent2:#8b5e1a;--ok:#0f6b42;--warn:#9a5b00}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.65 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif}main{max-width:1060px;margin:auto;padding:56px 22px 96px}h1,h2,h3,h4{line-height:1.15;letter-spacing:-.025em}h1{font-size:clamp(2.2rem,6vw,4.8rem);margin:.1em 0 .25em}h2{font-size:1.9rem;margin:2.35em 0 .55em;padding-top:.8em;border-top:1px solid var(--line)}h3{font-size:1.25rem;margin:1.8em 0 .25em}.kicker{text-transform:uppercase;letter-spacing:.12em;font-size:.76rem;font-weight:800;color:var(--accent2)}.dek{font-size:1.22rem;color:#333;max-width:860px}.meta{color:var(--muted);font-size:.95rem}.toc{background:var(--soft);border:1px solid var(--line);padding:18px 22px;border-radius:16px;margin:34px 0}.toc ol{columns:2;gap:36px}.callout{border-left:5px solid var(--accent);background:#fff;padding:16px 18px;border-radius:10px;margin:22px 0;box-shadow:0 1px 0 rgba(0,0,0,.04)}.verify{border-left:5px solid var(--ok);background:#fff;padding:16px 18px;border-radius:10px;margin:22px 0}.verify strong{color:var(--ok)}.warning{border-left:5px solid var(--warn);background:#fff;padding:16px 18px;border-radius:10px;margin:22px 0}.warning strong{color:var(--warn)}pre{background:var(--code);padding:16px;overflow:auto;border-radius:12px;border:1px solid var(--line);font-size:.88rem;line-height:1.45}code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}p code,li code{background:var(--code);padding:1px 5px;border-radius:5px}table{border-collapse:collapse;width:100%;margin:20px 0;background:#fff}th,td{border:1px solid var(--line);padding:10px;vertical-align:top}th{background:var(--soft);text-align:left}a{color:var(--accent)}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px}.card h3{margin-top:0}@media(max-width:720px){body{font-size:16px}.toc ol{columns:1}main{padding-top:32px}}
   </style>
 </head>
 <body>
 <main>
 <article>
-<p class="kicker">Product Requirements Document</p>
-<h1>Filesystem-Based Agent Framework</h1>
-<p class="dek">An implementation-ready PRD for building a local-first, filesystem-defined agent framework that can later grow Docker, Azure, Vertex, and AWS adapters.</p>
-<p class="meta">Audience: Claude Code, Codex, frontier coding agents, and human technical reviewers. Target proof: a local PDF summarization agent.</p>
+<p class="kicker">Product Requirements Document — Revised</p>
+<h1>Agent Directory Compiler and Local Harness</h1>
+<p class="dek">A filesystem-native agent specification, compiler, and local verification harness. It is intentionally not a replacement for Azure Foundry, AWS AgentCore, Google ADK / Vertex Agent Platform, LangGraph, OpenAI Agents SDK, or Anthropic Agent SDK.</p>
+<p class="meta">Audience: Claude Code, Codex, frontier coding agents, and human technical reviewers. Proof target: a local PDF summarization agent using the Anthropic API for integration tests.</p>
 
 <div class="toc"><strong>Contents</strong><ol>
-<li><a href="#thesis">Product thesis</a></li>
+<li><a href="#strategic-clarification">Strategic clarification</a></li>
 <li><a href="#goals">Goals and non-goals</a></li>
 <li><a href="#audience">Audience and agent-loop fit</a></li>
 <li><a href="#principles">Architectural principles</a></li>
@@ -28,16 +28,17 @@
 <li><a href="#source-spec">Agent source specification</a></li>
 <li><a href="#compiler">Compiler</a></li>
 <li><a href="#runtime">Runtime contract</a></li>
-<li><a href="#local-runtime">Local durable runtime</a></li>
+<li><a href="#local-runtime">Local reference runtime</a></li>
 <li><a href="#workflow">Workflow engine</a></li>
 <li><a href="#tools">Tool system</a></li>
 <li><a href="#artifacts">Artifact system</a></li>
 <li><a href="#telemetry">Telemetry and traces</a></li>
 <li><a href="#evals">Eval system</a></li>
-<li><a href="#model">Local model strategy</a></li>
+<li><a href="#model">Anthropic API testing model</a></li>
 <li><a href="#pdf-proof">PDF summarizer proof agent</a></li>
 <li><a href="#local-deploy">Local deploy behavior</a></li>
-<li><a href="#adapters">Future adapters</a></li>
+<li><a href="#adapters">Native-runtime adapters</a></li>
+<li><a href="#escape-test">Native runtime escape test</a></li>
 <li><a href="#agent-instructions">Coding-agent instructions</a></li>
 <li><a href="#testing">Testing strategy</a></li>
 <li><a href="#milestones">Milestones</a></li>
@@ -45,34 +46,52 @@
 <li><a href="#master-loop">Master Claude Loop</a></li>
 </ol></div>
 
-<section id="thesis">
-<h2>1. Product thesis</h2>
-<p>An agent should be a directory.</p>
-<p>The framework will let developers define an agent using ordinary files: Markdown instructions, YAML manifests, TypeScript tools, eval fixtures, schemas, workflows, and generated run artifacts. The first version must run entirely locally without Docker sandboxing, while preserving architectural seams for future Docker sandboxing and cloud adapters for Azure, Google Vertex / Agent Platform, and AWS.</p>
-<p>The framework should be built for frontier coding agents to extend. Claude Code and Codex should be able to read the repository, understand the architecture, implement missing components, run tests, inspect failures, and continue iterating without human step-by-step prompting.</p>
-<div class="callout"><strong>First proof agent:</strong> a local PDF summarization agent that compiles, runs, writes trace/events, writes a Markdown summary artifact, and passes evals without external API credentials.</div>
+<section id="strategic-clarification">
+<h2>1. Strategic clarification</h2>
+<p>This project should not compete with native agent runtimes. Its job is to define a filesystem-native authoring model, compiler, local verification harness, trace/eval/artifact conventions, and adapter contract.</p>
+<p>The local runtime is a reference implementation for development and proof. Production adapters should target native platforms whenever possible: Azure Foundry / Azure Agent Framework, AWS AgentCore, Google ADK / Vertex Agent Platform, LangGraph, OpenAI Agents SDK, Anthropic Agent SDK, or Docker.</p>
+<div class="callout"><strong>Product category:</strong> this is not a general-purpose agent SDK. It is an <strong>agent directory specification + compiler + local harness</strong>.</div>
+<h3>Authoring model</h3>
+<pre><code>agent/ source files
+        ↓
+compiler validation
+        ↓
+portable manifest
+        ↓
+local verification harness
+        ↓
+native runtime adapter later</code></pre>
+<h3>What this project must protect</h3>
+<ul>
+<li>Agent behavior is source-controlled.</li>
+<li>Instructions, tools, schemas, workflows, evals, and fixtures live together.</li>
+<li>Local runs produce inspectable evidence.</li>
+<li>Manifest semantics remain portable across future runtime targets.</li>
+<li>Native platforms do the heavy production work later.</li>
+</ul>
 </section>
 
 <section id="goals">
 <h2>2. Goals and non-goals</h2>
 <h3>Primary goals</h3>
 <ol>
-<li>Initialize an agent project.</li>
+<li>Initialize an agent directory.</li>
 <li>Compile an <code>agent/</code> directory into a portable manifest.</li>
-<li>Run the compiled agent locally.</li>
+<li>Run the compiled manifest locally through a reference harness.</li>
 <li>Persist run state, events, tool calls, traces, and artifacts.</li>
 <li>Support local tools without Docker sandboxing in V1.</li>
-<li>Support workflows as deterministic orchestration files.</li>
-<li>Support simple agentic execution later, but prioritize workflow execution first.</li>
+<li>Support deterministic workflow files as the first orchestration mode.</li>
 <li>Support evals as first-class files.</li>
-<li>Include a working local PDF summarization agent.</li>
-<li>Make future Docker, Azure, Vertex, and AWS adapters obvious to implement.</li>
+<li>Use the Anthropic API for the PDF summarizer integration test path.</li>
+<li>Include a working local PDF summarization proof agent.</li>
+<li>Make Docker, Azure, Vertex, AWS, and LangGraph adapter seams obvious.</li>
 </ol>
-<h3>Non-goals for V1</h3>
+<h3>Explicit non-goals for V1</h3>
 <pre><code>Docker sandbox execution
 Azure deployment
 Google Vertex / Agent Platform deployment
 AWS deployment
+LangGraph backend compilation
 Remote multi-tenant control plane
 Visual workflow builder
 Long-term semantic memory
@@ -80,16 +99,25 @@ OAuth connector framework
 Human approval UI
 Vector search
 Subagent fan-out/fan-in runtime</code></pre>
+<h3>Do not build</h3>
+<pre><code>A general-purpose workflow engine competitor to Temporal, Durable Functions, Step Functions, or LangGraph
+A managed agent runtime
+A model gateway
+A memory platform
+A hosted eval service
+An enterprise identity layer
+A cloud deployment orchestrator from scratch</code></pre>
+<div class="warning"><strong>Scope guard:</strong> if an implementation task starts rebuilding managed identity, cloud-scale orchestration, model routing, or hosted observability, stop and create an adapter seam instead.</div>
 <h3>Success definition</h3>
 <pre><code>pnpm install
 pnpm build
 pnpm test
 pnpm agent init examples/pdf-summarizer
 pnpm agent compile examples/pdf-summarizer
-pnpm agent run examples/pdf-summarizer --input examples/pdf-summarizer/fixtures/sample.pdf
-pnpm agent eval examples/pdf-summarizer
+ANTHROPIC_API_KEY=... pnpm agent run examples/pdf-summarizer --input examples/pdf-summarizer/fixtures/sample.pdf
+ANTHROPIC_API_KEY=... pnpm agent eval examples/pdf-summarizer
 pnpm agent deploy --target local examples/pdf-summarizer</code></pre>
-<p>Success requires <code>.agent/compiled/manifest.json</code>, run events, trace JSONL, PDF extraction, a generated <code>summary.md</code>, recorded tool calls, passing evals, and a running local HTTP API.</p>
+<p>Success requires a compiled manifest, run events, trace JSONL, PDF extraction, an Anthropic-generated <code>summary.md</code>, recorded tool calls, passing evals, and a running local HTTP API.</p>
 </section>
 
 <section id="audience">
@@ -103,9 +131,9 @@ pnpm agent deploy --target local examples/pdf-summarizer</code></pre>
 <div class="grid">
 <div class="card"><h3>Agent directory as source</h3><p><code>agent/</code> is source code. Runtime output belongs in <code>.agent/</code>.</p></div>
 <div class="card"><h3>Compile before execution</h3><p>The runtime executes compiled manifests, not arbitrary loose files.</p></div>
-<div class="card"><h3>Local runtime as simulator</h3><p><code>agent deploy --target local</code> should be production-like, strict, durable, and addressable.</p></div>
-<div class="card"><h3>Future cloud adapters</h3><p>V1 has interfaces for cloud targets, but no cloud SDK dependencies.</p></div>
-<div class="card"><h3>No Docker in V1</h3><p>Run tools in-process or subprocess. Docker becomes a future executor, not a rewrite.</p></div>
+<div class="card"><h3>Local as reference</h3><p>The local runtime proves behavior and evals. It is not the canonical production runtime.</p></div>
+<div class="card"><h3>Native backends later</h3><p>Azure, AWS, Vertex, Docker, and LangGraph are adapter targets, not V1 dependencies.</p></div>
+<div class="card"><h3>No Docker in V1</h3><p>Run tools in-process first. Docker becomes a future executor, not a rewrite.</p></div>
 <div class="card"><h3>Tracing is core</h3><p>Every run emits structured events and trace records.</p></div>
 </div>
 <h3>Required abstractions</h3>
@@ -115,9 +143,11 @@ ArtifactStore
 ToolExecutor
 WorkflowEngine
 TraceEmitter
+ModelProvider
 SecretProvider
 SandboxProvider
-DeploymentTarget</code></pre>
+DeploymentTarget
+BackendCompiler</code></pre>
 <p>Use SQLite for the local durable store. SQLite WAL mode is a good fit for local state because it improves read/write concurrency and records changes before checkpointing them back to the main database. <a href="https://www.sqlite.org/wal.html">SQLite WAL</a></p>
 </section>
 
@@ -139,7 +169,9 @@ DeploymentTarget</code></pre>
     tool-executor/
     evals/
     telemetry/
+    model-anthropic/
     pdf-tools/
+    adapters/
 
   examples/
     pdf-summarizer/
@@ -151,6 +183,7 @@ DeploymentTarget</code></pre>
         tools/
           extract_pdf_text.ts
           chunk_document.ts
+          summarize_chunks.ts
           write_artifact.ts
         skills/
           technical-summary.md
@@ -188,20 +221,23 @@ ES modules</code></pre>
 <tr><td>SQLite</td><td>better-sqlite3</td></tr>
 <tr><td>Testing</td><td>Vitest</td></tr>
 <tr><td>PDF extraction</td><td>pdfjs-dist or swappable adapter</td></tr>
+<tr><td>Anthropic API</td><td>@anthropic-ai/sdk</td></tr>
 <tr><td>Telemetry</td><td>@opentelemetry/api + @opentelemetry/sdk-node</td></tr>
 <tr><td>File watching</td><td>chokidar</td></tr>
 <tr><td>Logging</td><td>pino</td></tr>
 </tbody></table>
 <h3>Package responsibilities</h3>
-<pre><code>packages/core          shared types and interfaces
-packages/compiler      reads agent directory, validates source, emits manifest
-packages/runtime-local local durable runtime, SQLite store, HTTP API, worker
-packages/tool-executor tool loading, schema validation, execution
-packages/evals         eval parser, runner, assertions
-packages/telemetry     trace emitter, JSONL mirror, OpenTelemetry bridge
-packages/pdf-tools     PDF extraction utilities for proof agent
-packages/cli           init, dev, compile, run, eval, deploy</code></pre>
-<div class="verify"><strong>Verifiable condition:</strong><br>Run <code>pnpm test packages/core packages/compiler packages/runtime-local</code>. Success means each package exports expected top-level symbols, no circular dependency exists, and <code>pnpm build</code> passes.</div>
+<pre><code>packages/core            shared types and interfaces
+packages/compiler        reads agent directory, validates source, emits manifest
+packages/runtime-local   local reference runtime, SQLite store, HTTP API, worker
+packages/tool-executor   tool loading, schema validation, execution
+packages/evals           eval parser, runner, assertions
+packages/telemetry       trace emitter, JSONL mirror, OpenTelemetry bridge
+packages/model-anthropic Anthropic Messages API provider
+packages/pdf-tools       PDF extraction utilities for proof agent
+packages/adapters        adapter interfaces and not-implemented target stubs
+packages/cli             init, dev, compile, run, eval, deploy</code></pre>
+<div class="verify"><strong>Verifiable condition:</strong><br>Run <code>pnpm test packages/core packages/compiler packages/runtime-local packages/model-anthropic</code>. Success means package APIs are exported, no circular dependency exists, and <code>pnpm build</code> passes.</div>
 </section>
 
 <section id="cli">
@@ -211,23 +247,26 @@ agent dev &lt;path&gt;
 agent compile &lt;path&gt;
 agent run &lt;path&gt; --input &lt;file-or-json&gt;
 agent eval &lt;path&gt;
-agent deploy --target local &lt;path&gt;</code></pre>
+agent deploy --target local &lt;path&gt;
+agent plan --target &lt;local|docker|azure|vertex|aws|langgraph&gt; &lt;path&gt;</code></pre>
 <p>Expose through pnpm scripts:</p>
 <pre><code>pnpm agent init examples/pdf-summarizer
 pnpm agent compile examples/pdf-summarizer
-pnpm agent run examples/pdf-summarizer --input examples/pdf-summarizer/fixtures/sample.pdf
-pnpm agent eval examples/pdf-summarizer
-pnpm agent deploy --target local examples/pdf-summarizer</code></pre>
+ANTHROPIC_API_KEY=... pnpm agent run examples/pdf-summarizer --input examples/pdf-summarizer/fixtures/sample.pdf
+ANTHROPIC_API_KEY=... pnpm agent eval examples/pdf-summarizer
+pnpm agent deploy --target local examples/pdf-summarizer
+pnpm agent plan --target azure examples/pdf-summarizer</code></pre>
 <h3>Command behavior</h3>
 <ul>
 <li><code>agent init</code> creates <code>agent/</code> source and a placeholder <code>.agent/</code>.</li>
-<li><code>agent dev</code> watches files, recompiles on change, and prints diagnostics.</li>
+<li><code>agent dev</code> watches files, recompiles on change, and prints diagnostics. Keep thin in V1.</li>
 <li><code>agent compile</code> emits <code>.agent/compiled/manifest.json</code>, <code>manifest.hash</code>, <code>prompt-bundle.md</code>, and <code>diagnostics.json</code>.</li>
 <li><code>agent run</code> compiles if needed and executes one local task.</li>
 <li><code>agent eval</code> runs eval files under <code>agent/evals/</code>.</li>
-<li><code>agent deploy --target local</code> starts the local durable runtime and HTTP API.</li>
+<li><code>agent deploy --target local</code> starts the local reference runtime and HTTP API.</li>
+<li><code>agent plan --target ...</code> validates that a compiled manifest can be mapped to the requested target and emits a deployment plan or explicit unsupported-feature diagnostics.</li>
 </ul>
-<div class="verify"><strong>Verifiable condition:</strong><br>Run <code>pnpm agent init /tmp/adf-test</code>, compile, run, and deploy. Success means commands exit 0, manifest is written, run events exist, and <code>/health</code> returns 200.</div>
+<div class="verify"><strong>Verifiable condition:</strong><br>Run init, compile, run, eval, local deploy, and all target plans. Success means real commands execute, unsupported targets return clear plan diagnostics, and local deploy health returns 200.</div>
 </section>
 
 <section id="source-spec">
@@ -246,7 +285,7 @@ agent/channels/
 agent/subagents/
 agent/memory/
 agent/approvals/</code></pre>
-<p>V1 should support tools, workflows, skills, evals, fixtures, and schemas. V1 should parse but not fully implement channels, subagents, memory, and approvals so future additions are not breaking changes.</p>
+<p>V1 supports tools, workflows, skills, evals, fixtures, and schemas. V1 parses but does not fully implement channels, subagents, memory, and approvals so future additions are not breaking changes.</p>
 <h3>Example <code>agent.yaml</code></h3>
 <pre><code>name: pdf_summarizer
 version: 0.1.0
@@ -255,9 +294,10 @@ description: &gt;
   A local proof agent that reads a PDF and writes a structured Markdown summary.
 
 model:
-  provider: local_stub
-  model: deterministic-summary-v1
+  provider: anthropic
+  model: claude-sonnet-5
   temperature: 0
+  max_tokens: 2000
 
 runtime:
   durability: required
@@ -285,12 +325,12 @@ policy:
   allow_external_network: false
   allow_persistent_memory: false
   require_page_references: true</code></pre>
-<div class="verify"><strong>Verifiable condition:</strong><br>Compiler tests must cover a valid minimal agent, missing <code>agent.yaml</code>, missing <code>instructions.md</code>, malformed YAML, unsupported sandbox, and unknown future directories.</div>
+<div class="verify"><strong>Verifiable condition:</strong><br>Compiler tests cover valid minimal agents, missing files, malformed YAML, unsupported sandbox, unknown future directories, and Anthropic model configuration validation.</div>
 </section>
 
 <section id="compiler">
 <h2>9. Compiler requirements</h2>
-<p>The compiler transforms human-friendly filesystem source into a portable manifest.</p>
+<p>The compiler transforms filesystem source into a portable manifest.</p>
 <h3>Inputs</h3>
 <pre><code>agent/agent.yaml
 agent/instructions.md
@@ -309,10 +349,10 @@ agent/schemas/*</code></pre>
 <li>Read and validate <code>agent.yaml</code>.</li>
 <li>Read <code>instructions.md</code>.</li>
 <li>Discover tools, workflows, skills, evals, and schemas.</li>
-<li>Validate paths and declared default workflow.</li>
-<li>Validate runtime and policy settings.</li>
+<li>Validate declared default workflow exists.</li>
+<li>Validate runtime, model, and policy settings.</li>
 <li>Generate manifest hash and diagnostics.</li>
-<li>Emit actionable warnings.</li>
+<li>Emit actionable warnings for unsupported future features.</li>
 </ul>
 <h3>Manifest shape</h3>
 <pre><code>type CompiledManifest = {
@@ -323,7 +363,12 @@ agent/schemas/*</code></pre>
   sourceRoot: string;
   manifestHash: string;
   instructions: { file: string; contentHash: string };
-  model: { provider: string; model: string; temperature?: number };
+  model: {
+    provider: "anthropic" | "mock" | string;
+    model: string;
+    temperature?: number;
+    maxTokens?: number;
+  };
   runtime: {
     durability: "required" | "optional";
     sandbox: "none" | "docker" | "cloud";
@@ -336,13 +381,12 @@ agent/schemas/*</code></pre>
   evals: EvalDefinition[];
   policy: PolicyDefinition;
 };</code></pre>
-<div class="verify"><strong>Verifiable condition:</strong><br>Run <code>pnpm test packages/compiler</code> and <code>pnpm agent compile examples/pdf-summarizer</code>. Success means manifest includes all discovered components and manifest hash changes when <code>instructions.md</code> changes.</div>
+<div class="verify"><strong>Verifiable condition:</strong><br>Run compiler tests and <code>pnpm agent compile examples/pdf-summarizer</code>. Success means manifest includes all discovered components and manifest hash changes when source files change.</div>
 </section>
 
 <section id="runtime">
 <h2>10. Runtime contract</h2>
-<p>The runtime must execute compiled manifests, not raw source.</p>
-<h3>Interfaces</h3>
+<p>The runtime executes compiled manifests, not raw source.</p>
 <pre><code>interface RuntimeAdapter {
   startRun(input: RunInput): Promise&lt;RunHandle&gt;;
   resumeRun(runId: string, event: ExternalEvent): Promise&lt;RunHandle&gt;;
@@ -367,6 +411,11 @@ interface ToolExecutor {
   execute(call: ToolCall, ctx: ToolContext): Promise&lt;ToolResult&gt;;
 }
 
+interface ModelProvider {
+  generate(request: GenerateRequest): Promise&lt;GenerateResult&gt;;
+  generateStructured&lt;T&gt;(request: StructuredGenerateRequest&lt;T&gt;): Promise&lt;T&gt;;
+}
+
 interface TraceEmitter {
   emit(event: TraceEvent): Promise&lt;void&gt;;
 }</code></pre>
@@ -381,16 +430,18 @@ Required events:
   run.started, run.completed, run.failed
   manifest.loaded, instructions.loaded
   workflow.started, workflow.completed
+  model.called, model.completed, model.failed
   tool.called, tool.completed, tool.failed
   artifact.written
   eval.started, eval.completed
   policy.blocked</code></pre>
-<div class="verify"><strong>Verifiable condition:</strong><br>Run a fake workflow with two fake tools. Success means the runtime creates a run, events are sequential, state transitions are correct, failures emit <code>tool.failed</code>, and success emits <code>run.completed</code>.</div>
+<div class="verify"><strong>Verifiable condition:</strong><br>Run a fake workflow with two fake tools and a mocked Anthropic provider. Success means state transitions, event ordering, and failure events are correct.</div>
 </section>
 
 <section id="local-runtime">
-<h2>11. Local durable runtime</h2>
-<p>The local runtime is a production simulator. It must read the compiled manifest, create durable run records, execute workflows and tools, persist artifacts, emit traces, serve an HTTP API, and be shaped for later crash recovery.</p>
+<h2>11. Local reference runtime</h2>
+<p>The local runtime is a reference implementation and production simulator. Its purpose is to validate manifests, run proof agents locally, execute evals, emit traces, prove tool/artifact behavior, and support coding-agent development loops.</p>
+<div class="warning"><strong>Important:</strong> the local runtime is not intended to become a cloud-scale durable orchestration system. Do not add complexity that belongs in Temporal, Durable Functions, Step Functions, LangGraph, AgentCore, or Foundry.</div>
 <h3>Local layout</h3>
 <pre><code>.agent/local/
   manifest.json
@@ -449,6 +500,18 @@ CREATE TABLE tool_calls (
   created_at TEXT NOT NULL
 );
 
+CREATE TABLE model_calls (
+  id TEXT PRIMARY KEY,
+  run_id TEXT NOT NULL,
+  provider TEXT NOT NULL,
+  model TEXT NOT NULL,
+  input_json TEXT NOT NULL,
+  output_json TEXT,
+  status TEXT NOT NULL,
+  usage_json TEXT,
+  created_at TEXT NOT NULL
+);
+
 CREATE TABLE artifacts (
   id TEXT PRIMARY KEY,
   run_id TEXT NOT NULL,
@@ -468,26 +531,29 @@ GET    /runs/:id/events
 GET    /runs/:id/trace
 GET    /runs/:id/artifacts
 GET    /artifacts/:artifactId</code></pre>
-<div class="verify"><strong>Verifiable condition:</strong><br>Run <code>pnpm agent deploy --target local examples/pdf-summarizer</code>, then <code>curl /health</code> and <code>POST /runs</code>. Success means SQLite contains runs, events, tool calls, and artifacts.</div>
+<div class="verify"><strong>Verifiable condition:</strong><br>Run <code>pnpm agent deploy --target local examples/pdf-summarizer</code>, then <code>curl /health</code> and <code>POST /runs</code>. Success means SQLite contains runs, events, model calls, tool calls, and artifacts.</div>
 </section>
 
 <section id="workflow">
 <h2>12. Workflow engine</h2>
-<p>V1 should prioritize deterministic workflows over fully autonomous model loops.</p>
+<p>V1 prioritizes deterministic workflows over autonomous model loops.</p>
 <pre><code>agent/workflows/summarize_pdf.workflow.ts</code></pre>
 <h3>Workflow interface</h3>
-<pre><code>export default defineWorkflow("summarize_pdf", async ({ input, tools, artifacts, trace }) =&gt; {
+<pre><code>export default defineWorkflow("summarize_pdf", async ({ input, tools, model, artifacts, trace }) =&gt; {
   const extracted = await tools.extract_pdf_text({ filePath: input.filePath });
   const chunks = await tools.chunk_document({ pages: extracted.pages });
-  const summary = await tools.summarize_chunks({ chunks: chunks.chunks });
+  const summary = await model.generate({
+    task: "summarize_pdf_chunks",
+    input: { chunks: chunks.chunks }
+  });
   const artifact = await tools.write_artifact({
     filename: "summary.md",
-    content: summary.markdown
+    content: summary.text
   });
   return { artifact };
 });</code></pre>
-<p>The engine must load the default workflow, provide a typed tool proxy, emit workflow events, persist tool calls, return workflow output, and write run output JSON.</p>
-<div class="verify"><strong>Verifiable condition:</strong><br>Run a workflow that calls three tools in sequence. Success means workflow output is returned, each call is recorded, events appear in order, and the proxy prevents calling tools not listed in the manifest.</div>
+<p>The engine must load the default workflow, provide a typed tool proxy, provide the configured model provider, emit workflow events, persist model/tool calls, return workflow output, and write run output JSON.</p>
+<div class="verify"><strong>Verifiable condition:</strong><br>Run a workflow that calls tools and the Anthropic provider. Success means workflow output is returned, model/tool calls are recorded, and the proxy prevents undeclared tool calls.</div>
 </section>
 
 <section id="tools">
@@ -519,9 +585,8 @@ risk: read | write | network | destructive
 input schema
 execute function</code></pre>
 <h3>V1 execution modes</h3>
-<pre><code>inProcess
-subprocess</code></pre>
-<p>Default to <code>inProcess</code>. Docker is not implemented in V1.</p>
+<pre><code>inProcess</code></pre>
+<p>Do not implement Docker in V1. Subprocess execution may be added after the proof works, but it is not required for the first success state.</p>
 <h3>Minimum policy enforcement</h3>
 <ul>
 <li>Write tools may only write inside the run artifact directory.</li>
@@ -530,7 +595,7 @@ subprocess</code></pre>
 <li>Unknown tools cannot be called.</li>
 <li>Tool input must validate against schema.</li>
 </ul>
-<div class="verify"><strong>Verifiable condition:</strong><br>Test <code>read_ok</code>, <code>write_artifact</code>, <code>network_blocked</code>, and <code>invalid_input</code>. Success means expected pass/fail behavior and all calls recorded in <code>tool_calls</code> and events.</div>
+<div class="verify"><strong>Verifiable condition:</strong><br>Test <code>read_ok</code>, <code>write_artifact</code>, <code>network_blocked</code>, and <code>invalid_input</code>. Success means expected pass/fail behavior and all calls recorded.</div>
 </section>
 
 <section id="artifacts">
@@ -550,8 +615,8 @@ subprocess</code></pre>
 <pre><code>{
   "timestamp": "2026-07-03T00:00:00.000Z",
   "runId": "run_abc",
-  "type": "tool.called",
-  "name": "extract_pdf_text",
+  "type": "model.called",
+  "name": "anthropic.generate",
   "payload": {}
 }</code></pre>
 <h3>Required events</h3>
@@ -559,6 +624,9 @@ subprocess</code></pre>
 manifest.loaded
 instructions.loaded
 workflow.started
+model.called
+model.completed
+model.failed
 tool.called
 tool.completed
 tool.failed
@@ -566,8 +634,8 @@ artifact.written
 workflow.completed
 run.completed
 run.failed</code></pre>
-<p>V1 must include an abstraction that can emit OpenTelemetry spans, but tests may assert against JSONL. OpenTelemetry should be the vendor-neutral observability bridge. <a href="https://opentelemetry.io/docs/languages/js/">OpenTelemetry JavaScript docs</a></p>
-<div class="verify"><strong>Verifiable condition:</strong><br>Run the PDF summarizer. Success means <code>trace.jsonl</code> exists, contains run/workflow/tool/artifact/completion events, each event has timestamp/runId/type, and ordering matches execution.</div>
+<p>V1 must include an abstraction that can emit OpenTelemetry spans, but tests may assert against JSONL. OpenTelemetry is the vendor-neutral observability bridge. <a href="https://opentelemetry.io/docs/languages/js/">OpenTelemetry JavaScript docs</a></p>
+<div class="verify"><strong>Verifiable condition:</strong><br>Run the PDF summarizer. Success means <code>trace.jsonl</code> exists, contains model/tool/artifact/completion events, each event has timestamp/runId/type, and ordering matches execution.</div>
 </section>
 
 <section id="evals">
@@ -579,24 +647,24 @@ input:
   file: fixtures/sample.pdf
 
 assertions:
+  - type: run_succeeded
   - type: artifact_exists
     path: summary.md
-
   - type: output_contains
     text: Executive Summary
-
   - type: tool_called
     tool: extract_pdf_text
-
   - type: tool_called
     tool: chunk_document
-
+  - type: model_called
+    provider: anthropic
   - type: no_policy_violations</code></pre>
 <h3>V1 assertion types</h3>
 <pre><code>artifact_exists
 output_contains
 tool_called
 tool_not_called
+model_called
 event_emitted
 no_policy_violations
 run_succeeded
@@ -604,33 +672,42 @@ run_failed</code></pre>
 <p><code>agent eval</code> must compile the agent, run each eval, write results, and return nonzero on failure.</p>
 <pre><code>.agent/evals/latest/results.json
 .agent/evals/latest/results.md</code></pre>
-<div class="verify"><strong>Verifiable condition:</strong><br>Run <code>pnpm agent eval examples/pdf-summarizer</code>. Success means passing eval exits 0, broken eval exits nonzero, results files are written, and tool/artifact assertions work.</div>
+<div class="verify"><strong>Verifiable condition:</strong><br>Run <code>ANTHROPIC_API_KEY=... pnpm agent eval examples/pdf-summarizer</code>. Success means passing eval exits 0, broken eval exits nonzero, results files are written, and model/tool/artifact assertions work.</div>
 </section>
 
 <section id="model">
-<h2>17. Local model strategy</h2>
-<p>Do not require a paid model API for framework tests. Use a deterministic local model stub:</p>
-<pre><code>provider: local_stub
-model: deterministic-summary-v1</code></pre>
+<h2>17. Anthropic API testing model</h2>
+<p>Use the Anthropic API for the proof agent integration tests. Unit tests should mock <code>ModelProvider</code>, but the end-to-end PDF proof must call Anthropic when <code>ANTHROPIC_API_KEY</code> is present.</p>
+<p>Anthropic’s current model overview lists Claude Fable 5, Claude Opus 4.8, Claude Sonnet 5, and Claude Haiku 4.5, with API IDs such as <code>claude-fable-5</code>, <code>claude-opus-4-8</code>, and <code>claude-sonnet-5</code>. Anthropic recommends Claude Opus 4.8 for complex agentic coding and enterprise work when unsure, while Claude Sonnet 5 is positioned as a strong speed/intelligence balance. <a href="https://platform.claude.com/docs/en/about-claude/models/overview">Anthropic models overview</a></p>
+<h3>V1 default</h3>
+<pre><code>ANTHROPIC_MODEL=claude-sonnet-5</code></pre>
+<p>Allow override:</p>
+<pre><code>ANTHROPIC_MODEL=claude-opus-4-8
+ANTHROPIC_MODEL=claude-fable-5</code></pre>
 <h3>Provider interface</h3>
 <pre><code>interface ModelProvider {
   generate(request: GenerateRequest): Promise&lt;GenerateResult&gt;;
   generateStructured&lt;T&gt;(request: StructuredGenerateRequest&lt;T&gt;): Promise&lt;T&gt;;
 }</code></pre>
-<h3>Future providers</h3>
-<pre><code>anthropic
-openai
-azure_openai
-vertex
-bedrock
-ollama
-local_stub</code></pre>
-<div class="verify"><strong>Verifiable condition:</strong><br>Run the same PDF summarizer twice. Success means byte-stable output for the same input, no external credentials required, and provider interface mockable in tests.</div>
+<h3>Anthropic provider requirements</h3>
+<pre><code>Reads ANTHROPIC_API_KEY from environment
+Reads ANTHROPIC_MODEL, default claude-sonnet-5
+Uses Messages API
+Supports temperature from manifest
+Records usage when available
+Emits model.called, model.completed, model.failed
+Does not log API key
+Retries only safe transient failures
+Returns clear error if ANTHROPIC_API_KEY is missing</code></pre>
+<p>The Anthropic Messages API is the relevant API reference for implementing calls. <a href="https://platform.claude.com/docs/en/api/messages">Anthropic Messages API</a></p>
+<h3>Testing note</h3>
+<p>Because live model output is not guaranteed to be byte-stable, evals must assert structure and behavior rather than exact text. Use <code>temperature: 0</code>, but do not require byte-identical snapshots for Anthropic integration tests.</p>
+<div class="verify"><strong>Verifiable condition:</strong><br>Run the same PDF summarizer twice with <code>temperature: 0</code>. Success means both runs satisfy structural evals, both call Anthropic, and neither requires exact byte-stable output.</div>
 </section>
 
 <section id="pdf-proof">
 <h2>18. PDF summarizer proof agent</h2>
-<p>The proof agent validates source files, compile, workflow execution, tool execution, artifact writing, event log, trace log, evals, and local deploy.</p>
+<p>The proof agent validates source files, compile, workflow execution, Anthropic model execution, tool execution, artifact writing, event log, trace log, evals, and local deploy.</p>
 <h3>Directory</h3>
 <pre><code>examples/pdf-summarizer/
   agent/
@@ -641,7 +718,6 @@ local_stub</code></pre>
     tools/
       extract_pdf_text.ts
       chunk_document.ts
-      summarize_chunks.ts
       write_artifact.ts
     skills/
       technical-summary.md
@@ -666,29 +742,23 @@ Rules:
 - Do not invent facts.
 - If extraction quality is poor, say so.
 - Include page references when available.</code></pre>
-<h3>Tools</h3>
-<pre><code>extract_pdf_text(input: { filePath: string })
-  output: pages[], extractionQuality, warnings
-
-chunk_document(input: { pages, targetChars? })
-  output: chunks[]
-
-summarize_chunks(input: { chunks })
-  output: { markdown }
-
-write_artifact(input: { filename, content, mimeType? })
-  output: { artifactId, path }</code></pre>
 <h3>Workflow</h3>
-<pre><code>export default defineWorkflow("summarize_pdf", async ({ input, tools }) =&gt; {
+<pre><code>export default defineWorkflow("summarize_pdf", async ({ input, tools, model }) =&gt; {
   const extracted = await tools.extract_pdf_text({ filePath: input.filePath });
   const chunked = await tools.chunk_document({
     pages: extracted.pages,
     targetChars: 8000
   });
-  const summary = await tools.summarize_chunks({ chunks: chunked.chunks });
+  const summary = await model.generate({
+    task: "summarize_pdf_chunks",
+    input: {
+      instructions: "Return Markdown with Executive Summary, Key Points, Page-Referenced Notes, and Extraction Warnings.",
+      chunks: chunked.chunks
+    }
+  });
   const artifact = await tools.write_artifact({
     filename: "summary.md",
-    content: summary.markdown,
+    content: summary.text,
     mimeType: "text/markdown"
   });
   return { summaryArtifact: artifact };
@@ -705,14 +775,16 @@ assertions:
     tool: extract_pdf_text
   - type: tool_called
     tool: chunk_document
-  - type: tool_called
-    tool: summarize_chunks
+  - type: model_called
+    provider: anthropic
   - type: artifact_exists
     path: summary.md
   - type: output_contains
     text: Executive Summary
+  - type: output_contains
+    text: Key Points
   - type: no_policy_violations</code></pre>
-<div class="verify"><strong>Verifiable condition:</strong><br>Run compile, run, and eval for the example. Success means run succeeds, <code>summary.md</code> exists, contains <code>Executive Summary</code>, tool calls are recorded, and eval passes.</div>
+<div class="verify"><strong>Verifiable condition:</strong><br>Run compile, run, and eval for the example with <code>ANTHROPIC_API_KEY</code>. Success means run succeeds, Anthropic is called, <code>summary.md</code> exists, contains required sections, tool/model calls are recorded, and eval passes.</div>
 </section>
 
 <section id="local-deploy">
@@ -726,9 +798,10 @@ create .agent/local/runtime.db
 start HTTP API
 start local worker
 write runtime PID
-print local endpoints</code></pre>
+print local endpoints
+validate ANTHROPIC_API_KEY only when a run uses anthropic provider</code></pre>
 <h3>Expected output</h3>
-<pre><code>Local runtime started.
+<pre><code>Local reference runtime started.
 
 API:
   http://127.0.0.1:43110
@@ -746,59 +819,121 @@ Manifest:
       "filePath": "examples/pdf-summarizer/agent/fixtures/sample.pdf"
     }
   }'</code></pre>
-<div class="verify"><strong>Verifiable condition:</strong><br>Local deploy starts the API, <code>/health</code> returns OK, <code>POST /runs</code> executes the PDF workflow, <code>GET /runs/:id</code> returns status, and <code>GET /runs/:id/artifacts</code> lists <code>summary.md</code>.</div>
+<div class="verify"><strong>Verifiable condition:</strong><br>Local deploy starts the API, <code>/health</code> returns OK, <code>POST /runs</code> executes the PDF workflow when <code>ANTHROPIC_API_KEY</code> is present, <code>GET /runs/:id</code> returns status, and <code>GET /runs/:id/artifacts</code> lists <code>summary.md</code>.</div>
 </section>
 
 <section id="adapters">
-<h2>20. Future adapter architecture</h2>
+<h2>20. Native-runtime adapter architecture</h2>
+<p>Adapters should prefer native runtimes, not recreate the local runtime in the cloud.</p>
 <h3>Adapter interface</h3>
-<pre><code>interface DeploymentAdapter {
-  target: "local" | "docker" | "azure" | "vertex" | "aws";
+<pre><code>interface BackendCompiler {
+  target: "local" | "docker" | "azure" | "vertex" | "aws" | "langgraph";
+  plan(manifest: CompiledManifest): Promise&lt;DeploymentPlan&gt;;
+  emit?(manifest: CompiledManifest): Promise&lt;GeneratedBackendProject&gt;;
+}
+
+interface DeploymentAdapter {
+  target: "local" | "docker" | "azure" | "vertex" | "aws" | "langgraph";
   deploy(request: DeployRequest): Promise&lt;DeployResult&gt;;
   destroy?(request: DestroyRequest): Promise&lt;void&gt;;
   status?(request: StatusRequest): Promise&lt;DeploymentStatus&gt;;
 }</code></pre>
-<table><thead><tr><th>Target</th><th>Runtime</th><th>State</th><th>Artifacts</th><th>Telemetry</th></tr></thead><tbody>
-<tr><td>local</td><td>Node process</td><td>SQLite</td><td>Local filesystem</td><td>JSONL + optional OTLP</td></tr>
-<tr><td>docker</td><td>Docker Compose</td><td>SQLite/Postgres container</td><td>Mounted volume</td><td>OpenTelemetry Collector</td></tr>
-<tr><td>azure</td><td>Azure Container Apps or Foundry Hosted Agent</td><td>Cosmos DB / Azure SQL</td><td>Azure Blob Storage</td><td>Azure Monitor / App Insights</td></tr>
-<tr><td>vertex</td><td>Cloud Run or Agent Platform Runtime</td><td>Firestore / AlloyDB</td><td>Cloud Storage</td><td>Cloud Trace / Logging</td></tr>
-<tr><td>aws</td><td>Bedrock AgentCore, ECS, or Lambda</td><td>DynamoDB / Aurora</td><td>S3</td><td>CloudWatch / X-Ray / OTLP</td></tr>
+<table><thead><tr><th>Target</th><th>Preferred mapping</th></tr></thead><tbody>
+<tr><td>local</td><td>Reference Node runtime, SQLite, local filesystem, JSONL traces.</td></tr>
+<tr><td>docker</td><td>Docker Compose, mounted volumes, optional OpenTelemetry Collector, tool container sandboxing.</td></tr>
+<tr><td>azure</td><td>Azure Foundry Hosted Agent, Azure Agent Framework project, Durable Functions workflow, or Container Apps deployment.</td></tr>
+<tr><td>vertex</td><td>Google ADK / Vertex Agent Platform / Cloud Run / Workflows deployment.</td></tr>
+<tr><td>aws</td><td>AWS AgentCore Runtime, Step Functions workflow, or LangGraph-on-AWS deployment.</td></tr>
+<tr><td>langgraph</td><td>Compile workflow/subagent definitions into LangGraph graphs when explicit state machines, persistence, human-in-the-loop, replay, and graph-level orchestration are needed.</td></tr>
 </tbody></table>
-<div class="verify"><strong>Verifiable condition:</strong><br>Local adapter conforms to <code>DeploymentAdapter</code>. Docker, Azure, Vertex, and AWS are recognized as planned targets and return clear “not implemented” errors. No cloud SDKs are installed in V1.</div>
+<div class="verify"><strong>Verifiable condition:</strong><br>Local adapter works. Docker, Azure, Vertex, AWS, and LangGraph adapters produce deployment plans or clear “not implemented / unsupported feature” diagnostics. No cloud SDKs are installed in V1.</div>
+</section>
+
+<section id="escape-test">
+<h2>21. Native runtime escape test</h2>
+<p>The manifest must not contain assumptions that make Azure, AWS, Vertex, LangGraph, or Docker adapters impossible.</p>
+<h3>Mock adapter tests</h3>
+<pre><code>pnpm agent plan --target local examples/pdf-summarizer
+pnpm agent plan --target docker examples/pdf-summarizer
+pnpm agent plan --target azure examples/pdf-summarizer
+pnpm agent plan --target vertex examples/pdf-summarizer
+pnpm agent plan --target aws examples/pdf-summarizer
+pnpm agent plan --target langgraph examples/pdf-summarizer</code></pre>
+<h3>Expected result</h3>
+<pre><code>local:
+  supported: true
+  runtime: reference-local
+
+docker:
+  supported: planned
+  unsupportedFeatures: []
+
+azure:
+  supported: planned
+  candidateBackends:
+    - Azure Foundry Hosted Agent
+    - Azure Agent Framework
+    - Durable Functions
+    - Container Apps
+
+vertex:
+  supported: planned
+  candidateBackends:
+    - Google ADK
+    - Vertex Agent Platform
+    - Cloud Run
+    - Workflows
+
+aws:
+  supported: planned
+  candidateBackends:
+    - AWS AgentCore Runtime
+    - Step Functions
+    - ECS/Lambda
+
+langgraph:
+  supported: planned
+  candidateBackends:
+    - LangGraph graph compiler</code></pre>
+<div class="verify"><strong>Verifiable condition:</strong><br>Each mock adapter reads the same compiled manifest and produces a deployment plan or an explicit unsupported-feature diagnostic. The manifest must not include local-only paths as required production semantics.</div>
 </section>
 
 <section id="agent-instructions">
-<h2>21. Coding-agent project instructions</h2>
+<h2>22. Coding-agent project instructions</h2>
 <p>Create both <code>AGENTS.md</code> and <code>CLAUDE.md</code>. Keep them short and operational.</p>
-<pre><code># Agent Directory Framework
+<pre><code># Agent Directory Compiler and Local Harness
 
 ## Architecture
 
-This is a filesystem-based agent framework. The source of truth for an agent is `agent/`. Runtime output belongs in `.agent/`.
+This project is a filesystem agent specification, compiler, and local verification harness. It is not a replacement for Azure Foundry, AWS AgentCore, Google ADK, LangGraph, OpenAI Agents SDK, or Anthropic Agent SDK.
+
+The source of truth for an agent is `agent/`. Runtime output belongs in `.agent/`.
 
 ## Commands
 
 - `pnpm build`
 - `pnpm test`
 - `pnpm agent compile examples/pdf-summarizer`
-- `pnpm agent run examples/pdf-summarizer --input examples/pdf-summarizer/agent/fixtures/sample.pdf`
-- `pnpm agent eval examples/pdf-summarizer`
+- `ANTHROPIC_API_KEY=... pnpm agent run examples/pdf-summarizer --input examples/pdf-summarizer/agent/fixtures/sample.pdf`
+- `ANTHROPIC_API_KEY=... pnpm agent eval examples/pdf-summarizer`
+- `pnpm agent plan --target azure examples/pdf-summarizer`
 
 ## Rules
 
 - Do not add Docker, Azure, AWS, or GCP SDKs in V1.
-- Do not require paid model credentials for tests.
-- Keep local runtime deterministic.
+- Do use Anthropic API for the proof-agent integration path.
+- Do not require exact byte-stable model output from Anthropic.
+- Keep local runtime deterministic except for model output.
 - Add tests for every package change.
 - Prefer small interfaces over framework magic.
-- Do not silently ignore malformed agent files.</code></pre>
+- Do not silently ignore malformed agent files.
+- Do not rebuild managed cloud runtime capabilities.</code></pre>
 <p>Claude’s docs note that persistent project rules such as <code>CLAUDE.md</code> are loaded into the session and re-injected across requests, whereas ordinary conversation context can be compacted as sessions grow. Keep these files short so they help rather than bloat context. <a href="https://code.claude.com/docs/en/agent-sdk/agent-loop">Claude Agent SDK: Agent Loop</a></p>
 <div class="verify"><strong>Verifiable condition:</strong><br>Both files exist, include commands and V1 constraints, and neither exceeds 150 lines.</div>
 </section>
 
 <section id="testing">
-<h2>22. Testing strategy</h2>
+<h2>23. Testing strategy</h2>
 <h3>Unit tests</h3>
 <pre><code>core
 compiler
@@ -806,23 +941,26 @@ runtime-local
 tool-executor
 evals
 telemetry
-pdf-tools</code></pre>
+model-anthropic
+pdf-tools
+adapters</code></pre>
 <h3>Integration tests</h3>
 <pre><code>compile minimal agent
 compile invalid agent
-run fake workflow
-run PDF summarizer
-run evals
+run fake workflow with mocked model
+run PDF summarizer with Anthropic API
+run evals with Anthropic API
 deploy local runtime
-create run over HTTP</code></pre>
+create run over HTTP
+plan mock adapters</code></pre>
 <h3>Snapshot tests</h3>
 <pre><code>compiled manifest
 diagnostics
 events.jsonl normalized
 trace.jsonl normalized
-summary.md deterministic output
-eval results</code></pre>
-<p>Normalize timestamps and run IDs in snapshots.</p>
+eval results
+adapter plans</code></pre>
+<p>Normalize timestamps and run IDs in snapshots. Do not snapshot exact Anthropic output.</p>
 <h3>Smoke script</h3>
 <pre><code>#!/usr/bin/env bash
 set -euo pipefail
@@ -830,57 +968,67 @@ set -euo pipefail
 pnpm build
 pnpm test
 pnpm agent compile examples/pdf-summarizer
-pnpm agent run examples/pdf-summarizer --input examples/pdf-summarizer/agent/fixtures/sample.pdf
-pnpm agent eval examples/pdf-summarizer</code></pre>
-<div class="verify"><strong>Verifiable condition:</strong><br>Run <code>bash scripts/smoke-local.sh</code>. Success means it exits 0 from clean checkout, tests pass, and PDF summarizer output is generated.</div>
+ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:?missing} pnpm agent run examples/pdf-summarizer --input examples/pdf-summarizer/agent/fixtures/sample.pdf
+ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:?missing} pnpm agent eval examples/pdf-summarizer
+pnpm agent plan --target azure examples/pdf-summarizer
+pnpm agent plan --target aws examples/pdf-summarizer
+pnpm agent plan --target vertex examples/pdf-summarizer
+pnpm agent plan --target langgraph examples/pdf-summarizer</code></pre>
+<div class="verify"><strong>Verifiable condition:</strong><br>Run <code>bash scripts/smoke-local.sh</code> with <code>ANTHROPIC_API_KEY</code>. Success means it exits 0, tests pass, Anthropic-backed PDF summary is generated, evals pass, and adapter plans emit.</div>
 </section>
 
 <section id="milestones">
-<h2>23. Milestones</h2>
+<h2>24. Milestones</h2>
 <table><thead><tr><th>Milestone</th><th>Deliverables</th><th>Acceptance</th></tr></thead><tbody>
 <tr><td>1. Skeleton and types</td><td>Workspace setup, core types, instruction files, package boundaries.</td><td><code>pnpm build</code> and <code>pnpm test</code> pass.</td></tr>
 <tr><td>2. Compiler</td><td>Parser, discovery, manifest emitter, diagnostics.</td><td><code>pnpm agent compile examples/pdf-summarizer</code> emits manifest.</td></tr>
 <tr><td>3. Tool system and workflow engine</td><td><code>defineTool</code>, <code>defineWorkflow</code>, tool proxy, execution, recording.</td><td>Fake workflow and tool validation tests pass.</td></tr>
-<tr><td>4. Local runtime</td><td>SQLite store, lifecycle, events, artifact store, trace JSONL.</td><td><code>agent run</code> creates run directory, events, trace, artifacts.</td></tr>
-<tr><td>5. PDF proof</td><td>Fixture, extraction, chunking, summary, artifact, evals.</td><td>PDF example runs and evals pass.</td></tr>
-<tr><td>6. Local deploy</td><td>Local adapter, Fastify API, worker, runtime DB.</td><td><code>/health</code> returns 200 and <code>POST /runs</code> executes summarizer.</td></tr>
+<tr><td>4. Anthropic model provider</td><td>Messages API provider, env config, model call recording.</td><td>Integration test calls Anthropic when key exists and fails clearly when missing.</td></tr>
+<tr><td>5. Local reference runtime</td><td>SQLite store, lifecycle, events, model calls, artifact store, trace JSONL.</td><td><code>agent run</code> creates run directory, events, trace, artifacts.</td></tr>
+<tr><td>6. PDF proof</td><td>Fixture, extraction, chunking, Anthropic summary, artifact, evals.</td><td>PDF example runs and evals pass with <code>ANTHROPIC_API_KEY</code>.</td></tr>
+<tr><td>7. Local deploy</td><td>Local adapter, Fastify API, worker, runtime DB.</td><td><code>/health</code> returns 200 and <code>POST /runs</code> executes summarizer.</td></tr>
+<tr><td>8. Adapter planning</td><td>Mock target plans for Docker, Azure, Vertex, AWS, LangGraph.</td><td>All targets produce plans or clear unsupported diagnostics without cloud SDKs.</td></tr>
 </tbody></table>
 </section>
 
 <section id="done">
-<h2>24. Global definition of done</h2>
+<h2>25. Global definition of done</h2>
 <pre><code>pnpm install succeeds
 pnpm build succeeds
 pnpm test succeeds
-bash scripts/smoke-local.sh succeeds
+ANTHROPIC_API_KEY=... bash scripts/smoke-local.sh succeeds
 
 examples/pdf-summarizer compiles
-examples/pdf-summarizer runs locally
+examples/pdf-summarizer runs locally using Anthropic API
 examples/pdf-summarizer evals pass
 
 agent deploy --target local starts API
 POST /runs through API works
 summary.md artifact is generated
-events and traces are written
+events, model calls, tool calls, and traces are written
 
-Docker/Azure/Vertex/AWS are not implemented
-but their adapter seams are present</code></pre>
+Docker/Azure/Vertex/AWS/LangGraph are not implemented
+but their adapter planning seams are present
+
+The project does not rebuild native runtime capabilities
+The manifest remains portable across planned backends</code></pre>
 </section>
 
 <section id="master-loop">
-<h2>25. Master Claude Loop</h2>
+<h2>26. Master Claude Loop</h2>
 <pre><code>Trigger:
   Start from empty repository or partially implemented repository.
 
 Goal:
-  Implement the Agent Directory Framework V1 described in this PRD.
+  Implement the Agent Directory Compiler and Local Harness V1 described in this PRD.
 
 Constraints:
   - TypeScript / Node.js / pnpm.
   - No Docker implementation in V1.
   - No Azure, AWS, or Google SDK dependencies in V1.
-  - No paid model API required for tests.
-  - Local deterministic PDF summarizer must work.
+  - Do not rebuild native agent runtimes.
+  - Use Anthropic API for the PDF proof integration path.
+  - Do not require byte-stable Anthropic output.
   - Add tests for every implemented component.
   - Keep AGENTS.md and CLAUDE.md concise.
 
@@ -889,30 +1037,35 @@ Verification:
     pnpm install
     pnpm build
     pnpm test
-    bash scripts/smoke-local.sh
+    ANTHROPIC_API_KEY=... bash scripts/smoke-local.sh
     pnpm agent deploy --target local examples/pdf-summarizer
 
   Then verify:
     curl http://127.0.0.1:43110/health
-    POST /runs with sample PDF input
+    POST /runs with sample PDF input and ANTHROPIC_API_KEY set
     GET /runs/:id
     GET /runs/:id/events
     GET /runs/:id/artifacts
+    pnpm agent plan --target azure examples/pdf-summarizer
+    pnpm agent plan --target aws examples/pdf-summarizer
+    pnpm agent plan --target vertex examples/pdf-summarizer
+    pnpm agent plan --target langgraph examples/pdf-summarizer
 
 Success State:
   All verification commands pass.
-  Local PDF summarizer generates summary.md.
+  Local PDF summarizer calls Anthropic and generates summary.md.
   Eval results pass.
-  Runtime events and trace logs exist.
+  Runtime events, model calls, tool calls, and trace logs exist.
   Local deploy API works.
-  Future adapter seams exist.
+  Future adapter planning seams exist.
 
 Failure State:
   Any command fails.
   Any generated run lacks events or trace logs.
   PDF summary artifact missing.
-  Tests require external API credentials.
+  Anthropic key is logged or mishandled.
   Docker/cloud SDKs are added prematurely.
+  Implementation starts replacing native runtime capabilities instead of creating adapter seams.
 
 Stopping Rule:
   Stop only when the Success State is reached or when blocked by an ambiguous product decision not answered by this PRD.</code></pre>
